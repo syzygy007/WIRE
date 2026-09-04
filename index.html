@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M WIRE. Reel configurator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--paper:#F3EFE8;--paper2:#E8E2D8;--ink:#141414;--ink2:#514C45;--line:#D3CCBF;--red:#E01B22;--panel:#FBF9F5}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:"Space Grotesk",Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:1fr 440px;grid-template-rows:56px 1fr;height:100vh}
+header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--line);background:var(--paper)}
+.mark{font-weight:700;font-size:20px;letter-spacing:-.01em}.mark i{color:var(--red);font-style:normal}
+.micro{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.tabs{display:flex;gap:4px;background:var(--paper2);border-radius:999px;padding:3px}
+.tabs button{border:0;background:transparent;padding:7px 16px;border-radius:999px;font:inherit;font-size:13px;font-weight:500;color:var(--ink2);cursor:pointer}
+.tabs button.on{background:var(--ink);color:#fff}
+#stage{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,#fbfaf7 0,#ebe6dd 60%,#ddd6ca 100%)}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:0;top:0;pointer-events:none;width:100%;height:100%}
+.chip{position:absolute;transform:translate(-50%,-100%);background:rgba(20,20,20,.86);color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;white-space:nowrap;pointer-events:auto;cursor:pointer;backdrop-filter:blur(4px);line-height:1.2;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.chip b{display:block;font-size:13px}
+.chip.sel{background:var(--red)}
+.chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(255,255,255,.4)}
+.chip .stem{position:absolute;left:50%;top:100%;width:1px;height:18px;background:rgba(20,20,20,.5)}
+.card{position:absolute;left:22px;bottom:22px;z-index:6;background:rgba(251,249,245,.94);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:260px;max-width:340px;pointer-events:auto;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.card h4{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}.card h4 i{color:var(--red);font-style:normal}
+.card .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:13px;margin-top:8px}.card .kv span:nth-child(odd){color:var(--ink2)}
+.views{position:absolute;right:16px;top:14px;display:flex;gap:6px;pointer-events:auto}
+.views button,.card button{font:inherit;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(251,249,245,.9);cursor:pointer}
+.views button.acc{background:var(--ink);color:#fff;border-color:var(--ink);margin-right:8px}.views button.acc span:not(:empty){background:var(--red);border-radius:999px;padding:1px 7px;margin-left:4px;font-size:11px}
+.drawer{position:absolute;right:16px;top:56px;bottom:22px;width:min(420px,calc(100% - 32px));background:rgba(251,249,245,.97);border:1px solid var(--line);border-radius:12px;padding:18px 18px 12px;overflow:auto;pointer-events:auto;box-shadow:0 14px 40px rgba(0,0,0,.12);z-index:5}
+.drawer .dh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}.drawer h4{margin:2px 0 0;font-size:24px;letter-spacing:-.02em}.drawer h4 i{color:var(--red);font-style:normal}
+.drawer .x{font:inherit;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.ai{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ai b{display:block;font-size:14px}.ai small{display:block;color:var(--ink2);font-size:12px;margin-top:2px}
+.ai .sug{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-top:4px}
+.qty{display:flex;align-items:center;gap:4px}.qty button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;font:inherit;cursor:pointer}.qty span{min-width:22px;text-align:center;font-weight:700}
+.ai.on{background:rgba(224,27,34,.04);margin:0 -8px;padding:10px 8px;border-radius:8px}
+.title{position:absolute;left:22px;top:18px;pointer-events:none}
+.title h2{margin:0;font-size:44px;letter-spacing:-.03em;line-height:1}.title h2 i{color:var(--red);font-style:normal}
+.title .micro{margin-top:2px}
+aside{overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:18px 20px 60px}
+section.p{border-bottom:1px solid var(--line);padding:14px 0 18px}
+section.p:last-child{border:0}
+h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:0 0 10px;font-weight:500}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.f label{font-size:11px;color:var(--ink2);display:block;margin-bottom:3px}
+.f .w{grid-column:1/3}
+input,select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;width:100%;color:var(--ink)}
+input[type=checkbox]{width:auto}
+button.b{font:inherit;font-size:13px;font-weight:500;padding:9px 14px;border-radius:999px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button.b.primary{background:var(--ink);color:#fff}
+button.b.red{background:var(--red);border-color:var(--red);color:#fff}
+button.b.ghost{border-color:var(--line);color:var(--ink2)}
+button.b.sm{padding:5px 10px;font-size:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.reels{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.reels button{border:1px solid var(--line);background:#fff;padding:6px 12px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer}
+.reels button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.spaces{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+.sp{border:1px solid var(--line);border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;background:#fff;min-height:70px;font-size:11px;color:var(--ink2)}
+.sp.on{border-color:var(--red);box-shadow:0 0 0 2px rgba(224,27,34,.15)}
+.sp .n{font-size:16px;font-weight:700;color:var(--ink)}
+.sp .sw{display:block;height:8px;border-radius:4px;margin:6px 0}
+.stack{border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:8px;background:#fff}
+.stack.on{border-color:var(--red)}
+.stack .t{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink2);margin-bottom:8px}
+.stack .t b{color:var(--ink);font-size:13px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:22px 14px;text-align:center;cursor:pointer;background:#fff;display:block}
+.drop.on{border-color:var(--red)}
+.drop b{display:block;font-size:16px}.drop span{font-size:12px;color:var(--ink2)}
+.drop input{display:none}
+.status{font-size:12px;color:var(--ink2);margin-top:8px;min-height:16px}.status.err{color:var(--red)}
+.lines{font-size:12px}
+.lines .r{display:grid;grid-template-columns:28px 44px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.lines .r i{font-style:normal;color:var(--ink2);display:block;font-size:11px;margin-top:2px}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.presets button{border:1px solid var(--line);background:#fff;padding:6px 10px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer}
+.presets button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.dots{display:inline-flex;gap:3px;vertical-align:middle;margin-left:6px}.dots i{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+#printdoc{display:none}
+.sect{position:absolute;left:16px;right:16px;bottom:16px;top:64px;background:rgba(251,249,245,.97);border:1px solid var(--line);border-radius:12px;padding:16px 18px 12px;overflow:auto;pointer-events:auto;box-shadow:0 14px 40px rgba(0,0,0,.12);z-index:5}
+.sect svg{width:100%;height:auto;display:block;max-height:calc(100% - 60px)}
+.sect .band{cursor:pointer}.sect .band:hover .bandfill{filter:brightness(1.08)}
+.steps .s{display:grid;grid-template-columns:34px 1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px;cursor:pointer;align-items:start}
+.steps .s .n{font-weight:700;font-size:15px;color:var(--red)}.steps .s b{display:block;font-size:13px;color:var(--ink)}.steps .s i{font-style:normal;color:var(--ink2);display:block}
+.steps .s.reelhead{grid-template-columns:1fr;cursor:default;padding:12px 0 4px;border-bottom:2px solid var(--ink);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+@media (max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:56px 52vh 1fr}header{grid-column:1}aside{border-left:0;border-top:1px solid var(--line)}.title h2{font-size:30px}.card{max-width:70%}}
+@media print{
+  @page{size:letter landscape;margin:.45in}
+  html,body{height:auto;overflow:visible;background:#fff}
+  #app{display:none}
+  #printdoc{display:block;font-size:11px}
+  .pg{display:grid;grid-template-columns:4.6in 1fr;gap:.35in;align-items:start}
+  .pg img{width:100%;display:block}
+  .pg h2{font-size:40px;margin:0 0 2px;letter-spacing:-.03em}.pg h2 i{color:var(--red);font-style:normal}
+  .pg .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:8px 0 12px}
+  .pg table{border-collapse:collapse;width:100%}.pg th{text-align:left;font-size:9px;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid #000;padding:4px 0}.pg td{border-bottom:1px solid #ccc;padding:5px 4px 5px 0;vertical-align:top}
+  .pg .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .pglines{page-break-after:auto}
+  .pg.cust{display:block}.pg.cust .top{display:grid;grid-template-columns:2.9in 1fr;gap:.35in;align-items:start}
+  .pg.cust .sec{margin-top:.1in}.pg.cust .sec svg{height:3.2in;width:auto;max-width:100%;display:block;margin:0 auto}
+  .pg.cust .top img{max-height:2.4in;width:auto;max-width:100%}
+  .pg.cust .top table{font-size:9.5px}.pg.cust .top td{padding:2px 4px 2px 0}.pg.cust .kv{margin:6px 0 8px}
+  .pg tr.cuthead td{background:#141414;color:#fff;font-weight:700;padding:5px 6px;letter-spacing:.02em}
+  .pg tr.cuthead td .p{color:#ff8a8f}
+  .pg .stepn{display:inline-block;min-width:22px;padding:2px 6px;border-radius:999px;background:#E01B22;color:#fff;font-weight:700;text-align:center}
+  .pg .seq td{page-break-inside:avoid}
+  .pg .wh svg{width:100%;height:auto;margin-top:.12in}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="mark">M WIRE<i>.</i> <span class="micro" style="margin-left:10px">ARK module · reel configurator</span></div>
+    <div class="tabs" id="tabs"><button class="on" data-t="build">Build</button><button data-t="sheet">From sheet</button><button data-t="order">Order</button></div>
+  </header>
+
+  <div id="stage">
+    <div class="title"><h2 id="stTitle">New reel<i>.</i></h2><div class="micro" id="stSub">Click a stack to inspect it · drag to orbit · scroll to zoom</div></div>
+    <div class="views"><button id="accBtn" class="acc">Accessories <span id="accN"></span></button><button id="sectBtn">Section</button><button data-v="q">3/4</button><button data-v="s">Side</button><button data-v="f">Front</button><button data-v="t">Top</button></div>
+    <div id="acc" class="drawer" style="display:none">
+      <div class="dh"><div><div class="micro">Accessories</div><h4>Pulling equipment and rope<i>.</i></h4></div><button class="x" id="accClose">Close</button></div>
+      <div class="status" style="margin:0 0 10px">Suggested items are marked from the reels on this order. Add anything the crew will need on site; it goes on the P21 order with the wire.</div>
+      <div id="accList"></div>
+    </div>
+    <div id="sect" class="sect" style="display:none">
+      <div class="dh" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div class="micro">Section · what is on this reel</div><h4 style="margin:2px 0 0;font-size:24px;letter-spacing:-.02em" id="sectTitle">Reel<i style="color:var(--red);font-style:normal">.</i></h4></div><button class="x" id="sectClose" style="font:inherit;font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer">Close</button></div>
+      <div id="sectSvg"></div>
+      <div class="status">Cut through the axle, seen from the side. Space widths are opened up so the cuts can be read; heights show how full each space really is. Pull 1 is on the outside and comes off first. Click a cut to inspect it.</div>
+    </div>
+    <div class="hud" id="hud"></div>
+    <div class="card" id="card" style="display:none"></div>
+  </div>
+
+  <aside>
+    <div id="pane-build">
+      <section class="p">
+        <h3>Reels on this order</h3>
+        <div class="reels" id="reelTabs"></div>
+        <div class="f">
+          <div><label>Reel #</label><input id="rNum"></div>
+          <div><label>Feeder ID</label><input id="rFeeder"></div>
+          <div><label>Area</label><input id="rArea"></div>
+          <div><label>Asset</label><select id="rAsset"><option value="mreel">M REEL · 5 space</option><option value="mroll">REEL MATE · parallel on wood</option><option value="aframe">A-frame · single spinning, 5 compartment</option></select></div>
+          <div><label>Finish</label><select id="rFinish"><option value="black">Black gloss</option><option value="orange">Safety orange</option><option value="blue">Blue</option></select></div>
+        </div>
+        <div class="btns"><button class="b sm ghost" id="addReel">+ Add reel</button><button class="b sm ghost" id="dupReel">Duplicate</button><button class="b sm ghost" id="delReel">Remove</button></div>
+      </section>
+
+      <section class="p">
+        <h3>Build the reel</h3>
+        <div class="presets" id="presets">
+          <button data-p="480" class="on">480V · Brn Org Yel</button>
+          <button data-p="208">208Y/120V · Blk Red Blu</button>
+        </div>
+        <div class="f" style="margin-top:10px">
+          <div><label>Phase size</label><select id="bSize"></select></div>
+          <div><label>Material</label><select id="bMat"><option>Al</option><option>Cu</option></select></div>
+          <div><label>Insulation</label><select id="bIns"><option>THHN/THWN-2</option><option>XHHW-2</option><option>USE-2</option><option>RHW-2</option></select></div>
+          <div><label>Length per run (ft)</label><input id="bLen" type="number" value="165"></div>
+          <div><label>Neutral</label><select id="bNeu"><option value="0">None</option><option value="1">Add neutral</option></select></div>
+          <div><label>Ground size</label><select id="bGnd"></select></div>
+          <div class="w"><label>Field designation for this pull</label><input id="bDest" placeholder="Electrical Room 1"></div>
+          <div class="w"><label><input type="checkbox" id="bHeads" checked> Pulling heads on every cut, staggered</label></div>
+        </div>
+        <div class="btns"><button class="b primary" id="buildBtn">Build reel</button><button class="b ghost" id="clearBtn">Clear</button></div>
+      </section>
+
+      <section class="p">
+        <h3>Cuts · pulls on this reel</h3>
+        <div class="status" style="margin:0 0 8px">Cut 1 winds first against the drum and is the last pull. The last cut is on the outside and is Pull 1.</div>
+        <div id="stackList"></div>
+        <div class="f" style="margin-top:10px">
+          <div><label>Length of the next cut (ft)</label><input id="sLen" type="number" value="120"></div>
+          <div><label>Field designation</label><input id="sDest" placeholder="IT Room 2"></div>
+        </div>
+        <div class="btns"><button class="b primary sm" id="addStackBtn">+ Add a cut across the reel</button></div>
+        <div class="status">Adds one cut on top of every space, same size and color as the cut below it. Length and designation are the only choices; delete single cuts afterward if a space should not carry it.</div>
+      </section>
+
+      <section class="p">
+        <h3>Spaces · click one</h3>
+        <div class="spaces" id="spaces"></div>
+        <div id="stacks"></div>
+      </section>
+    </div>
+
+    <div id="pane-sheet" style="display:none">
+      <section class="p">
+        <h3>Build from the customer's sheet</h3>
+        <label class="drop" id="drop"><input type="file" id="file" accept="application/pdf"><b>Drop the Smart Reel order form</b><span>PDF, one page per reel. Or click to choose.</span></label>
+        <div class="status" id="status"></div>
+        <div class="btns"><button class="b ghost sm" id="sample">Load the RNO NAP 4 sample</button></div>
+      </section>
+      <section class="p">
+        <h3>Job</h3>
+        <div class="f">
+          <div><label>Job name</label><input id="jName"></div>
+          <div><label>Job number</label><input id="jNum"></div>
+          <div><label>Customer</label><input id="jCust"></div>
+          <div><label>Ordered by</label><input id="jBy"></div>
+          <div><label>Date needed</label><input id="jDate"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="pane-order" style="display:none">
+      <section class="p">
+        <h3>Warehouse build order · every reel, in sequence</h3>
+        <div class="status" style="margin:0 0 6px">One step per cut across a reel. The warehouse works the list top to bottom: Reel 1 cut 1, cut 2, cut 3, then Reel 2 cut 1 and so on. Click a step to see it.</div>
+        <div class="steps" id="steps"></div>
+      </section>
+      <section class="p">
+        <h3>P21 order lines</h3>
+        <div class="lines" id="lines"></div>
+        <div class="status">Draft. Item IDs follow the LT cut pattern; verify in P21 before import.</div>
+        <div class="btns"><button class="b red" id="pdfBtn">Customer PDF</button><button class="b primary" id="buildSheetBtn">Warehouse build sheet</button><button class="b" id="csvBtn">Download CSV</button></div>
+        <div class="status">Customer PDF: one page per reel with the 3D picture and the section drawing of the stacks. Build sheet: the full sequence across every reel first, then one page per reel with the same step numbers.</div>
+      </section>
+    </div>
+  </aside>
+</div>
+<div id="printdoc"></div>
+
+<script>
+/* ---------- data ---------- */
+const COLORS={brown:'#5a3418',orange:'#ef7a15',yellow:'#f0c31f',gray:'#8d8d8d',green:'#2c9a44',black:'#151515',red:'#d01d1d',blue:'#1f4fc4',white:'#ececec',purple:'#6f3e9a',pink:'#e27cb0'};
+const ABBR={brown:'BRN',orange:'ORN',yellow:'YEL',gray:'GRY',green:'GRN',black:'BLK',red:'RED',blue:'BLU',white:'WHT',purple:'PUR',pink:'PNK'};
+const SIZES=['14','12','10','8','6','4','3','2','1','1/0','2/0','3/0','4/0','250','300','350','400','500','600','750'];
+const OD={'14':.11,'12':.13,'10':.16,'8':.21,'6':.25,'4':.31,'3':.34,'2':.37,'1':.43,'1/0':.48,'2/0':.53,'3/0':.58,'4/0':.64,'250':.7,'300':.75,'350':.8,'400':.85,'500':.93,'600':1.03,'750':1.14};
+const PRESET={'480':{ph:['brown','orange','yellow'],neu:'gray',v:'480V'},'208':{ph:['black','red','blue'],neu:'white',v:'208Y/120V'}};
+const SLOTS=5, CAPACITY=500, HEAD_STAGGER=[6,12,14,15,18];
+const $=id=>document.getElementById(id);
+
+const JOB={name:'',number:'',customer:'',orderedBy:'',dateNeeded:'',reels:[]};
+let cur=0, sel=null; // sel={space,stack}
+function newReel(o={}){return Object.assign({reel:'',feeder:'',area:'',voltage:'480V',asset:'mreel',instructions:'',spaces:Array.from({length:SLOTS},()=>[])},o);}
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):'';}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function reelRuns(r){const out=[];r.spaces.forEach((st,i)=>st.forEach((run,k)=>out.push({...run,space:i+1,stack:k+1,of:st.length})));return out;}
+function assignHeads(r){let pos=0;r.spaces.forEach(st=>{if(!st.length)return;pos++;st.forEach(run=>{if(!run.headLen)run.headLen=HEAD_STAGGER[pos-1]||18;});});}
+
+/* ---------- three.js scene ---------- */
+const stage=$('stage'); const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.outputEncoding=THREE.sRGBEncoding; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=.95; renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.insertBefore(renderer.domElement,stage.firstChild);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(32,1,.1,100);
+const hemi=new THREE.HemisphereLight(0xffffff,0xb9b0a2,.25); scene.add(hemi);
+const key=new THREE.DirectionalLight(0xfff6ea,.75); key.position.set(3,5,4); key.castShadow=true; key.shadow.mapSize.set(1024,1024); key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3; key.shadow.radius=6;key.shadow.bias=-.0004; scene.add(key);
+const rim=new THREE.DirectionalLight(0xe8f0ff,.35); rim.position.set(-4,2,-3); scene.add(rim);
+const fill=new THREE.PointLight(0xffffff,.35,20); fill.position.set(0,-2,4); scene.add(fill);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({opacity:.28})); floor.rotation.x=-Math.PI/2; floor.position.y=-1.01; floor.receiveShadow=true; scene.add(floor);
+// a small studio: a warm gray room with softboxes, baked to a PMREM so the gloss black and the THHN pick up real reflections
+function studioEnv(){const sc=new THREE.Scene();
+  sc.add(new THREE.Mesh(new THREE.BoxGeometry(24,24,24),new THREE.MeshStandardMaterial({color:0x8f8a82,side:THREE.BackSide,roughness:1,metalness:0})));
+  const panel=(w,h,x,y,z,rx,ry,i)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(i,i*.98,i*.94)}));m.position.set(x,y,z);m.rotation.set(rx,ry,0);sc.add(m);};
+  panel(10,5,0,11.9,0,Math.PI/2,0,7); panel(5,7,-11.9,3,0,0,Math.PI/2,3.5); panel(5,7,11.9,3,0,0,-Math.PI/2,2.2); panel(12,4,0,5,-11.9,0,0,1.6); panel(12,3,0,2,11.9,0,Math.PI,1.2);
+  sc.add(new THREE.Mesh(new THREE.PlaneGeometry(24,24),new THREE.MeshStandardMaterial({color:0x55504a,roughness:1})).rotateX(-Math.PI/2).translateZ(-11.9));
+  const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();const t=pm.fromScene(sc,.04).texture;pm.dispose();return t;}
+scene.environment=studioEnv();
+
+const reelGroup=new THREE.Group(); scene.add(reelGroup);
+/* M REEL per the 2023-06-24 drawings, in inches; 1 scene unit = 30 in so the 60 in rim is radius 1 */
+const IN=1/30;
+const D={rimOD:60,rimID:59,rimW:3,discT:.125,discOD:58.75,discID:8.25,spokeW:1,spokeD:2.25,spokes:10,hubD:12,hubL:4,arborD:3.5,
+  drumL:32,spools:5,spoolW:5,spoolFlT:.25,spoolFlOD:56,coreD:16};
+D.spacer=(D.drumL-D.spools*(D.spoolW+2*D.spoolFlT))/(D.spools-1);   // 1.125 in between spool pairs
+const RM={ringOD:60,ringID:59,ringW:2,plateT:.125,plateOD:59,spokeW:1.5,spokeT:.375,spokes:10,hubD:7.25,hubL:1.5,axleD:3,axleL:42.375,
+  woodOAL:38.715,woodID:34.715,spool:34,woodFlT:2,woodFlOD:44,woodCoreD:20};   // wood flange OD and core guessed from the drawing proportions
+const R=D.rimOD/2*IN, HUB=D.coreD/2*IN, FT=D.rimW*IN, L=D.drumL*IN, RMAX=(D.spoolFlOD/2-1)*IN;
+const RM_L=RM.woodOAL*IN, RM_HUB=RM.woodCoreD/2*IN, RM_RMAX=(RM.woodFlOD/2-1)*IN, RM_W=RM.spool*IN;
+/* single spinning A-frame: a 5 compartment rod reel on a 2 in axle in an A-frame payout/transport stand (dimensions estimated from the photos) */
+const AF={flOD:48,ring:1.25,spokes:8,spokeD:1,cmpts:5,cmptW:6,spacer:1.5,drumD:16,axleD:2,axleL:62,baseW:60,baseD:46,tube:3,apexH:33,pocket:4,pocketX:12};
+AF.pitch=AF.cmptW+2*AF.ring+AF.spacer;              // each compartment is its own spool: ring, space, ring, then a gap so it spins on its own
+AF.L=AF.cmpts*AF.pitch-AF.spacer;
+const AF_HUB=AF.drumD/2*IN, AF_RMAX=(AF.flOD/2-1)*IN, AF_W=AF.cmptW*IN;
+function afSpoolY(i){return -AF.L/2*IN+i*AF.pitch*IN;}                     // start of spool i (its first ring)
+function afSpaceY(i){return afSpoolY(i)+AF.ring*IN;}
+function assetGeo(asset){return asset==='mroll'?{hub:RM_HUB,rmax:RM_RMAX,flOD:RM.woodFlOD,floorY:-R-.01}:asset==='aframe'?{hub:AF_HUB,rmax:AF_RMAX,flOD:AF.flOD,floorY:-AF.apexH*IN}:{hub:HUB,rmax:RMAX,flOD:D.spoolFlOD,floorY:-R-.01};}
+const SPW=D.spoolW*IN;
+function spoolY(i){return -L/2+i*(D.spoolW+2*D.spoolFlT+D.spacer)*IN;}   // start of spool i (its first flange)
+function spaceY(i){return spoolY(i)+D.spoolFlT*IN;}                       // start of the open space inside spool i
+// true wound fill: how far out a cut of this footage reaches in a space this wide
+function fillR(r0,ft,od,spaceIn,flOD=D.spoolFlOD){const across=Math.max(1,Math.floor(spaceIn/od));let rem=ft*12,r=r0/IN;while(rem>0&&r<flOD/2-.5){rem-=across*2*Math.PI*(r+od/2);r+=od*.87;}return r*IN;}
+
+const matFlange=new THREE.MeshPhysicalMaterial({color:0x070707,metalness:.25,roughness:.32,clearcoat:1,clearcoatRoughness:.12,envMapIntensity:1});
+const matSpoke=new THREE.MeshPhysicalMaterial({color:0x0c0c0c,metalness:.35,roughness:.36,clearcoat:.9,clearcoatRoughness:.18,envMapIntensity:1});
+const matBlue=new THREE.MeshPhysicalMaterial({color:0x1f5fc0,metalness:.15,roughness:.38,clearcoat:.7,clearcoatRoughness:.22,envMapIntensity:.9});
+const matOrange=new THREE.MeshPhysicalMaterial({color:0xd8401a,metalness:.1,roughness:.38,clearcoat:.8,clearcoatRoughness:.2,envMapIntensity:.9});
+const matHub=new THREE.MeshStandardMaterial({color:0xaaa49b,metalness:.15,roughness:.6,envMapIntensity:.7});
+const matWall=new THREE.MeshPhysicalMaterial({color:0xf2f2f0,metalness:.05,roughness:.4,clearcoat:.5,envMapIntensity:.8});
+const matWallDisc=new THREE.MeshPhysicalMaterial({color:0xffffff,transparent:true,opacity:.07,roughness:.2,side:THREE.DoubleSide,depthWrite:false});
+const matHead=new THREE.MeshStandardMaterial({color:0xcfd0d2,metalness:.95,roughness:.22,envMapIntensity:1});
+const matWood=new THREE.MeshStandardMaterial({color:0xa8783f,roughness:.82});
+const matWrap=new THREE.MeshStandardMaterial({color:0xe8dcc3,roughness:.9,metalness:0,side:THREE.DoubleSide});
+const matSeam=new THREE.MeshStandardMaterial({color:0x2a2622,roughness:.8,side:THREE.DoubleSide});
+const matWoodEdge=new THREE.MeshStandardMaterial({color:0x7a5530,roughness:.9});
+
+/* the Main M from the Illustrator logo, as a cutout in the wheel plate */
+const M_PATH="M 690.136719 79.1875 C 689.136719 79.140625 625.460938 79.074219 594.53125 79 C 592.28125 78.996094 591.363281 79.605469 590.761719 81.847656 C 587.03125 95.8125 579.328125 123.378906 577.46875 129.742188 C 575.609375 123.378906 567.90625 95.8125 564.175781 81.847656 C 563.574219 79.605469 562.652344 78.996094 560.40625 79 C 529.476562 79.074219 465.804688 79.140625 464.800781 79.1875 C 446.628906 170.078125 410.285156 351.84375 410.285156 351.84375 C 410.285156 351.84375 507.140625 351.910156 510.515625 351.910156 C 513.191406 351.921875 514.21875 351.121094 514.859375 348.578125 C 518.886719 332.550781 528.042969 298.21875 528.042969 298.21875 C 528.042969 298.21875 540.8125 346.929688 541.226562 348.578125 C 541.867188 351.121094 542.894531 351.921875 545.570312 351.910156 C 548.664062 351.910156 573.386719 351.855469 577.46875 351.84375 C 581.550781 351.855469 606.273438 351.910156 609.367188 351.910156 C 612.042969 351.921875 613.070312 351.121094 613.710938 348.578125 C 614.125 346.929688 626.894531 298.21875 626.894531 298.21875 C 626.894531 298.21875 636.050781 332.550781 640.078125 348.578125 C 640.71875 351.121094 641.746094 351.921875 644.421875 351.910156 C 647.796875 351.910156 744.652344 351.84375 744.652344 351.84375 C 744.652344 351.84375 708.308594 170.078125 690.136719 79.1875 Z";
+function mPath(cx,cy,heightIn,rot){   // returns a THREE.Path of the M, centered at (cx,cy) in scene units, heightIn tall, rotated rot radians
+  const sc=heightIn*IN/272.9, ox=577.47, oy=215.45, cs=Math.cos(rot), sn=Math.sin(rot);
+  const T=(x,y)=>{const px=(x-ox)*sc, py=-(y-oy)*sc; return [cx+px*cs-py*sn, cy+px*sn+py*cs];};
+  const tok=M_PATH.match(/[MLCZ]|-?[\d.]+/g); const path=new THREE.Path(); let i=0;
+  while(i<tok.length){const c=tok[i++];
+    if(c==='M'){const [x,y]=T(+tok[i++],+tok[i++]);path.moveTo(x,y);}
+    else if(c==='L'){const [x,y]=T(+tok[i++],+tok[i++]);path.lineTo(x,y);}
+    else if(c==='C'){const [a1,b1]=T(+tok[i++],+tok[i++]),[a2,b2]=T(+tok[i++],+tok[i++]),[x,y]=T(+tok[i++],+tok[i++]);path.bezierCurveTo(a1,b1,a2,b2,x,y);}
+    else if(c==='Z'){path.closePath();}}
+  return path;}
+function plateGeometry(odIn,idIn,tIn,mHeightIn,mRadiusIn){   // wheel plate with the M cut out top and bottom
+  const shape=new THREE.Shape(); shape.absarc(0,0,odIn/2*IN,0,Math.PI*2,false);
+  const hub=new THREE.Path(); hub.absarc(0,0,idIn/2*IN,0,Math.PI*2,true); shape.holes.push(hub);
+  shape.holes.push(mPath(0,-mRadiusIn*IN,mHeightIn,0));          // upright M at the bottom
+  shape.holes.push(mPath(0,mRadiusIn*IN,mHeightIn,Math.PI));     // the mate at the top, turned over like the render
+  return new THREE.ExtrudeGeometry(shape,{depth:tIn*IN,bevelEnabled:false,curveSegments:128});}
+function plateMesh(odIn,idIn,tIn,mHeightIn,mRadiusIn,mat,s,yDisc){
+  const m=new THREE.Mesh(plateGeometry(odIn,idIn,tIn,mHeightIn,mRadiusIn),mat);
+  m.rotation.order='YXZ'; m.rotation.x=s>0?-Math.PI/2:Math.PI/2; m.rotation.y=s>0?Math.PI/2:-Math.PI/2; m.position.y=yDisc-s*tIn/2*IN;
+  m.castShadow=true; m.receiveShadow=true; return m;}
+function tagTexture(text){const c=document.createElement('canvas');c.width=1024;c.height=256;const x=c.getContext('2d');x.clearRect(0,0,1024,256);x.fillStyle='#e01b22';x.font='700 120px Space Grotesk, Arial';x.textAlign='center';x.textBaseline='middle';x.fillText(text,512,128);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
+function labelTexture(text){const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');x.clearRect(0,0,512,512);
+  x.fillStyle='#f2f2f2';x.font='700 210px Space Grotesk, Arial';x.textAlign='center';x.textBaseline='middle';x.fillText('M',256,300);
+  x.font='500 46px Space Grotesk, Arial';x.letterSpacing='14px';x.fillText('R E E L',256,432);
+  x.font='500 30px Space Grotesk, Arial';x.fillStyle='#e01b22';x.fillText(text||'',256,120);
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
+
+let wireMeshes=[], chipAnchors=[];
+function buildReel(r){
+  while(reelGroup.children.length) reelGroup.remove(reelGroup.children[0]);
+  wireMeshes=[]; chipAnchors=[];
+  const wood=r.asset==='mroll', af=r.asset==='aframe', G=assetGeo(r.asset); floor.position.y=G.floorY; ty=af?-.42:0;
+  const mF=r.finish==='orange'?matOrange:r.finish==='blue'?matBlue:matFlange, mS=r.finish==='orange'?matOrange:r.finish==='blue'?matBlue:matSpoke;
+  if(af){
+    // the rod reel: six tube rings with eight tube spokes each, a drum with lightening holes, on the axle
+    const rodMat=mS;
+    for(let i=0;i<AF.cmpts;i++){const y0=afSpoolY(i), wSp=(AF.cmptW+2*AF.ring)*IN, ph=i*.35;   // each spool is independent, so give each its own spoke phase
+      const core=new THREE.Mesh(new THREE.CylinderGeometry(AF_HUB,AF_HUB,wSp,64),mS);core.position.y=y0+wSp/2;core.castShadow=true;core.receiveShadow=true;reelGroup.add(core);
+      const hole=new THREE.Mesh(new THREE.CircleGeometry(1.5*IN,24),new THREE.MeshStandardMaterial({color:0x111111}));hole.position.set(Math.cos(ph)*AF_HUB,y0+wSp/2,Math.sin(ph)*AF_HUB);hole.rotation.y=Math.PI/2-ph;reelGroup.add(hole);
+      [y0+AF.ring/2*IN,y0+wSp-AF.ring/2*IN].forEach(y=>{
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(AF.flOD/2*IN,AF.ring/2*IN,12,128),rodMat);ring.rotation.x=Math.PI/2;ring.position.y=y;ring.castShadow=true;reelGroup.add(ring);
+        for(let k=0;k<AF.spokes;k++){const a=(k+.5)*2*Math.PI/AF.spokes+ph,len=(AF.flOD/2-AF.drumD/2)*IN;const sp=new THREE.Mesh(new THREE.CylinderGeometry(AF.spokeD/2*IN,AF.spokeD/2*IN,len,10),rodMat);sp.position.set(Math.cos(a)*(AF.drumD/2*IN+len/2),y,Math.sin(a)*(AF.drumD/2*IN+len/2));sp.rotation.z=Math.PI/2;sp.rotation.y=-a;sp.castShadow=true;reelGroup.add(sp);}});
+      if(i<AF.cmpts-1){const sp=new THREE.Mesh(new THREE.CylinderGeometry(AF.axleD*IN*1.1,AF.axleD*IN*1.1,AF.spacer*IN,24),matHead);sp.position.y=y0+wSp+AF.spacer*IN/2;reelGroup.add(sp);}}
+    const axle=new THREE.Mesh(new THREE.CylinderGeometry(AF.axleD/2*IN,AF.axleD/2*IN,AF.axleL*IN,24),matHead);reelGroup.add(axle);
+    // the A-frame stand, drawn in world space (it does not spin with the reel)
+    const st=new THREE.Group(); const T=AF.tube*IN, hw=AF.baseW/2*IN, hd=AF.baseD/2*IN, y0=G.floorY;
+    const bar=(len,x,y,z,rx=0,ry=0,rz=0,mat=mF,sz=T)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(len,sz,sz),mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=true;m.receiveShadow=true;st.add(m);return m;};
+    bar(AF.baseW*IN,0,y0+T/2,hd); bar(AF.baseW*IN,0,y0+T/2,-hd);                                  // long rails
+    [-hw,0,hw].forEach(x=>bar(AF.baseD*IN,x,y0+T/2,0,0,Math.PI/2));                                // end and middle cross rails
+    [-1,1].forEach(sx=>{const m=bar(AF.baseD*IN,sx*AF.pocketX*IN,y0+T/2+T*.9,0,0,Math.PI/2,0,mF,AF.pocket*IN);});   // fork pockets
+    [-1,1].forEach(sx=>{const x=sx*(hw-T/2); const legLen=Math.hypot(AF.apexH*IN-T,hd);
+      [-1,1].forEach(sz=>{const ang=Math.atan2(hd,AF.apexH*IN-T);const m=bar(legLen,x,y0+T+(AF.apexH*IN-T)/2,sz*hd/2,sz*ang+Math.PI/2,0,Math.PI/2);});
+      bar(hd*1.1,x,y0+T+(AF.apexH*IN-T)*.4,0,0,Math.PI/2);                                            // A cross member
+      const blk=bar(6*IN,x,y0+AF.apexH*IN,0,0,0,0,matSpoke,4.5*IN);                                    // bearing block at the apex
+    });
+    st.rotation.z=Math.PI/2; // undo the reel group's turn so the stand stays upright, then the group turn puts the axle along X
+    reelGroup.add(st);
+  } else if(wood){
+    // REEL MATE: two 60 in wheel assemblies on a 3 in axle, the customer's wooden reel riding between them
+    const yW=RM.axleL/2*IN;   // outer face of each wheel
+    [-1,1].forEach(s=>{
+      const yOut=s*yW, yIn=s*(yW-RM.ringW*IN);
+      const ring=new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(RM.ringID/2*IN,Math.min(yIn,yOut)),new THREE.Vector2(R,Math.min(yIn,yOut)),new THREE.Vector2(R,Math.max(yIn,yOut)),new THREE.Vector2(RM.ringID/2*IN,Math.max(yIn,yOut))],128),mF);ring.castShadow=true;reelGroup.add(ring);
+      const yPlate=yOut-s*(RM.spokeW+RM.plateT/2)*IN;
+      reelGroup.add(plateMesh(RM.plateOD,RM.hubD,RM.plateT,10,19,mF,s,yPlate));
+      const spokeLen=(RM.ringID/2-RM.hubD/2)*IN;
+      for(let k=0;k<RM.spokes;k++){const a=(k+.5)*2*Math.PI/RM.spokes;const sp=new THREE.Mesh(new THREE.BoxGeometry(RM.spokeT*IN,RM.spokeW*IN,spokeLen),mS);sp.position.set(Math.cos(a)*(RM.hubD/2*IN+spokeLen/2),yOut-s*RM.spokeW/2*IN,-Math.sin(a)*(RM.hubD/2*IN+spokeLen/2));sp.rotation.y=a+Math.PI/2;sp.castShadow=true;reelGroup.add(sp);}
+      const hub=new THREE.Mesh(new THREE.CylinderGeometry(RM.hubD/2*IN,RM.hubD/2*IN,RM.hubL*IN,48),mS);hub.position.y=yOut-s*RM.spokeW/2*IN;reelGroup.add(hub);
+      const face=new THREE.Mesh(new THREE.PlaneGeometry(.4,.1),new THREE.MeshStandardMaterial({map:tagTexture('REEL MATE '+(r.reel||'')),roughness:.5,metalness:.1,transparent:true}));
+      face.position.set(.84,yPlate+s*(RM.plateT/2*IN+.002),0);face.rotation.order='YXZ';face.rotation.x=s>0?-Math.PI/2:Math.PI/2;face.rotation.y=s>0?Math.PI/2:-Math.PI/2;reelGroup.add(face);
+    });
+    const axle=new THREE.Mesh(new THREE.CylinderGeometry(RM.axleD/2*IN,RM.axleD/2*IN,RM.axleL*IN+.06,32),matHead);reelGroup.add(axle);
+    const nut=new THREE.Mesh(new THREE.CylinderGeometry(2.8*IN,2.8*IN,1.5*IN,6),matHead);nut.position.y=yW+.04;reelGroup.add(nut);
+    // the wooden reel
+    [-1,1].forEach(s=>{const f=new THREE.Mesh(new THREE.CylinderGeometry(RM.woodFlOD/2*IN,RM.woodFlOD/2*IN,RM.woodFlT*IN,96),matWood);f.position.y=s*(RM.woodID/2+RM.woodFlT/2)*IN;f.castShadow=true;f.receiveShadow=true;reelGroup.add(f);
+      const e=new THREE.Mesh(new THREE.TorusGeometry(RM.woodFlOD/2*IN,RM.woodFlT*IN*.5,8,96),matWoodEdge);e.rotation.x=Math.PI/2;e.position.y=f.position.y;reelGroup.add(e);
+      for(let k=0;k<24;k++){const a=k*Math.PI/12;const nail=new THREE.Mesh(new THREE.CylinderGeometry(.35*IN,.35*IN,.2*IN,8),matSpoke);nail.position.set(Math.cos(a)*(RM.woodFlOD/2-2)*IN,f.position.y+s*RM.woodFlT/2*IN,Math.sin(a)*(RM.woodFlOD/2-2)*IN);reelGroup.add(nail);}});
+    const core=new THREE.Mesh(new THREE.CylinderGeometry(RM_HUB,RM_HUB,RM.woodID*IN,64),matWood);core.receiveShadow=true;reelGroup.add(core);
+  } else {
+    // wheel weldment, both ends: rim band, recessed disc with the M cutout, ten spokes flush with the rim edge, hub
+    [-1,1].forEach(s=>{
+      const y0=s*L/2, yOut=s*(L/2+FT);
+      const rim=new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(D.rimID/2*IN,Math.min(y0,yOut)),new THREE.Vector2(R,Math.min(y0,yOut)),new THREE.Vector2(R,Math.max(y0,yOut)),new THREE.Vector2(D.rimID/2*IN,Math.max(y0,yOut))],128),mF);rim.castShadow=true;rim.receiveShadow=true;reelGroup.add(rim);
+      const yDisc=yOut-s*(D.spokeD+D.discT/2)*IN;
+      reelGroup.add(plateMesh(D.discOD,D.discID,D.discT,10,19,mF,s,yDisc));
+      const spokeLen=(D.rimID/2-D.hubD/2)*IN;
+      for(let k=0;k<D.spokes;k++){const a=(k+.5)*2*Math.PI/D.spokes;const sp=new THREE.Mesh(new THREE.BoxGeometry(D.spokeW*IN,D.spokeD*IN,spokeLen),mS);sp.position.set(Math.cos(a)*(D.hubD/2*IN+spokeLen/2),yOut-s*D.spokeD/2*IN,-Math.sin(a)*(D.hubD/2*IN+spokeLen/2));sp.rotation.y=a+Math.PI/2;sp.castShadow=true;reelGroup.add(sp);}
+      const hub=new THREE.Mesh(new THREE.CylinderGeometry(D.hubD/2*IN,D.hubD/2*IN,D.hubL*IN,48),mS);hub.position.y=yOut-s*(D.hubL/2-.5)*IN;hub.castShadow=true;reelGroup.add(hub);
+      const bore=new THREE.Mesh(new THREE.CylinderGeometry(D.arborD/2*IN,D.arborD/2*IN,D.hubL*IN+.02,32),matHead);bore.position.y=hub.position.y;reelGroup.add(bore);
+      // the M cutout reads as a light panel on the disc, between two spokes at the lower half
+      const face=new THREE.Mesh(new THREE.PlaneGeometry(.4,.1),new THREE.MeshStandardMaterial({map:tagTexture('REEL '+(r.reel||'')),roughness:.5,metalness:.1,transparent:true}));
+      face.position.set(.84,yDisc+s*(D.discT/2*IN+.002),0);face.rotation.order='YXZ';face.rotation.x=s>0?-Math.PI/2:Math.PI/2;face.rotation.y=s>0?Math.PI/2:-Math.PI/2;reelGroup.add(face);
+    });
+    // arbor and the five spools: core, a thin flange each side, spacers between spools, a hole in each core
+    const arbor=new THREE.Mesh(new THREE.CylinderGeometry(D.arborD/2*IN,D.arborD/2*IN,L+2*FT+.1,32),matHead);reelGroup.add(arbor);
+    for(let i=0;i<D.spools;i++){const y=spoolY(i), wSp=(D.spoolW+2*D.spoolFlT)*IN;
+      const core=new THREE.Mesh(new THREE.CylinderGeometry(HUB,HUB,wSp,64,1,true),matHub);core.position.y=y+wSp/2;core.receiveShadow=true;reelGroup.add(core);
+      const hole=new THREE.Mesh(new THREE.CircleGeometry(1.25*IN,24),new THREE.MeshStandardMaterial({color:0x222222}));hole.position.set(0,y+wSp/2,HUB+.001);reelGroup.add(hole);
+      [y+D.spoolFlT*IN/2,y+wSp-D.spoolFlT*IN/2].forEach(yy=>{
+        const ring=new THREE.Mesh(new THREE.TorusGeometry(D.spoolFlOD/2*IN,D.spoolFlT*IN*.6,10,128),matWall);ring.rotation.x=Math.PI/2;ring.position.y=yy;reelGroup.add(ring);
+        const disc=new THREE.Mesh(new THREE.RingGeometry(HUB,D.spoolFlOD/2*IN,128),matWallDisc);disc.rotation.x=Math.PI/2;disc.position.y=yy;reelGroup.add(disc);
+        for(let k=0;k<8;k++){const a=k*Math.PI/4;const bar=new THREE.Mesh(new THREE.CylinderGeometry(D.spoolFlT*IN*.45,D.spoolFlT*IN*.45,D.spoolFlOD/2*IN-HUB,8),matWall);bar.position.set(Math.cos(a)*(HUB+D.spoolFlOD/2*IN)/2,yy,Math.sin(a)*(HUB+D.spoolFlOD/2*IN)/2);bar.rotation.z=Math.PI/2;bar.rotation.y=-a;reelGroup.add(bar);}
+      });
+      if(i<D.spools-1){const sp=new THREE.Mesh(new THREE.CylinderGeometry(D.arborD*IN,D.arborD*IN,D.spacer*IN,32),matSpoke);sp.position.y=y+wSp+D.spacer*IN/2;reelGroup.add(sp);}
+    }
+  }
+  // the wire
+  r.spaces.forEach((stack,i)=>{
+    if(wood){ if(i>0) return; }
+    const y0=wood?-RM_W/2:af?afSpaceY(i):spaceY(i), w=wood?RM_W:af?AF_W:SPW;
+    let rr=G.hub+.003;
+    stack.forEach((run,k)=>{
+      const od=OD[run.size]||.5, d=od*IN;
+      const par=(wood&&run.par)?run.par.length:1;
+      const r1=Math.min(G.rmax,Math.max(rr+d*2.2,fillR(rr,run.length*par,od,w/IN,G.flOD)));
+      const colors=wood&&run.par?run.par:[run.color];
+      const mesh=wireMesh(rr,r1,y0,y0+w,d,colors,k%2?.78:1); mesh.userData={space:i,stack:k};
+      if(k>0){ // paper separator between pulls: a kraft ring on both faces with a dark seam so the stacks read as separate cuts
+        [y0-.004,y0+w+.004].forEach(yy=>{const ring=new THREE.Mesh(new THREE.RingGeometry(rr-d*.35,rr+d*.35,96),matWrap);ring.rotation.x=Math.PI/2;ring.position.y=yy;reelGroup.add(ring);
+          const seam=new THREE.Mesh(new THREE.TorusGeometry(rr,d*.09,6,96),matSeam);seam.rotation.x=Math.PI/2;seam.position.y=yy;reelGroup.add(seam);});} mesh.castShadow=true; mesh.receiveShadow=true; reelGroup.add(mesh); wireMeshes.push(mesh);
+      if(run.head){const ang=2.0+k*.4; const h=headMesh(r1+d*.55,y0+w/2,ang,d); h.userData={space:i,stack:k,head:true}; reelGroup.add(h); wireMeshes.push(h);}
+      run._r0=rr; run._r1=r1; rr=r1;
+    });
+    chipAnchors.push({space:i,y:y0+w/2,r:rr});
+  });
+  reelGroup.rotation.z=-Math.PI/2; // axis along X, space 1 on the left, ground on the right
+}
+function wireMesh(r0,r1,y0,y1,d,colors,shade=1){
+  const pts=[]; const hd=d/2; const bumps=[];
+  const push=(x,y,b)=>{pts.push(new THREE.Vector2(x,y));bumps.push(b);};
+  push(r0,y0,0);
+  const nR=Math.max(1,Math.round((r1-r0)/d)), nA=Math.max(1,Math.round((y1-y0)/d));
+  const dr=(r1-r0)/nR, da=(y1-y0)/nA;
+  for(let k=0;k<nR;k++){const c=r0+(k+.5)*dr;for(let t=0;t<=4;t++){const a=Math.PI+t*Math.PI/4;push(c+hd*Math.cos(a),y0+hd*Math.sin(a)*.9,k);}}
+  for(let k=0;k<nA;k++){const c=y0+(k+.5)*da;for(let t=0;t<=4;t++){const a=-Math.PI/2+t*Math.PI/4;push(r1+hd*Math.cos(a)*.9,c+hd*Math.sin(a),k);}}
+  for(let k=nR-1;k>=0;k--){const c=r0+(k+.5)*dr;for(let t=0;t<=4;t++){const a=t*Math.PI/4;push(c+hd*Math.cos(a),y1+hd*Math.sin(a)*.9,k);}}
+  push(r0,y1,0);
+  const geo=new THREE.LatheGeometry(pts,96);
+  // vertex colors: one color per turn, cycling through the paralleled set
+  const n=pts.length, segs=96, col=new Float32Array(geo.attributes.position.count*3);
+  const cs=colors.map(c=>new THREE.Color(COLORS[c]||c).convertSRGBToLinear().multiplyScalar(shade));
+  for(let s=0;s<=segs;s++)for(let p=0;p<n;p++){const c=cs[bumps[p]%cs.length];const idx=(s*n+p)*3;col[idx]=c.r;col[idx+1]=c.g;col[idx+2]=c.b;}
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const m=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.48,metalness:0,clearcoat:.55,clearcoatRoughness:.4,envMapIntensity:.7,emissive:0x000000});
+  return new THREE.Mesh(geo,m);
+}
+function headMesh(rad,y,ang,d){
+  const gp=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(d*.62,d*.7,d*3.2,24),matHead); body.castShadow=true; gp.add(body);
+  const eye=new THREE.Mesh(new THREE.TorusGeometry(d*.45,d*.14,8,24),matHead); eye.position.y=d*1.9; gp.add(eye);
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(d*.74,d*.74,d*.35,24),new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.6})); band.position.y=-d*1.1; gp.add(band);
+  // lay it tangent to the coil at angle ang, on the outer surface
+  gp.position.set(Math.cos(ang)*rad,y,Math.sin(ang)*rad);
+  gp.rotation.y=Math.PI/2-ang; gp.rotation.z=Math.PI/2;
+  return gp;
+}
+
+/* orbit */
+let theta=.55, phi=1.18, dist=5.0, tx=0, ty=0, drag=null, idle=true;
+function setCam(){camera.position.set(dist*Math.sin(phi)*Math.sin(theta),dist*Math.cos(phi),dist*Math.sin(phi)*Math.cos(theta));camera.lookAt(tx,ty,0);}
+const views={q:[.55,1.18,5.0],s:[0,Math.PI/2,5.0],f:[Math.PI/2,Math.PI/2,4.8],t:[.001,.001,5.2]};
+document.querySelectorAll('.views button').forEach(b=>b.onclick=()=>{const v=views[b.dataset.v];anim(v[0],v[1],v[2]);});
+let target=null;function anim(a,b,c){target={theta:a,phi:b,dist:c};}
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,t:theta,p:phi,moved:false};cv.setPointerCapture(e.pointerId);idle=false;target=null;});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)drag.moved=true;theta=drag.t-dx*.006;phi=Math.min(Math.PI-.15,Math.max(.15,drag.p-dy*.006));});
+cv.addEventListener('pointerup',e=>{if(drag&&!drag.moved)pick(e);drag=null;});
+cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.min(9,Math.max(2.2,dist*(1+e.deltaY*.001)));},{passive:false});
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+function pick(e){const b=cv.getBoundingClientRect();mouse.x=((e.clientX-b.left)/b.width)*2-1;mouse.y=-((e.clientY-b.top)/b.height)*2+1;ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects(wireMeshes,true);
+  if(hits.length){let o=hits[0].object;while(o&&o.userData.space===undefined)o=o.parent;if(o)select(o.userData.space,o.userData.stack);}
+  else select(null);}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);
+const tmp=new THREE.Vector3();
+function frame(){
+  if(target){theta+=(target.theta-theta)*.12;phi+=(target.phi-phi)*.12;dist+=(target.dist-dist)*.12;if(Math.abs(target.theta-theta)<.002)target=null;}
+  else if(idle) theta+=.0012;
+  setCam(); 
+  wireMeshes.forEach(m=>{const on=sel&&m.userData.space===sel.space&&m.userData.stack===sel.stack;m.traverse(o=>{if(o.material&&o.material.emissive){o.material.emissive.setHex(on?0x3a0a0a:0x000000);o.material.emissiveIntensity=on?.9:0;}});});
+  renderer.render(scene,camera); hud(); requestAnimationFrame(frame);
+}
+function hud(){
+  const r=JOB.reels[cur]; if(!r) return; const H=$('hud'); const b=cv.getBoundingClientRect();
+  const chips=[];
+  chipAnchors.forEach(a=>{const st=r.spaces[a.space]; if(!st.length) return;
+    tmp.set(-(a.r+.05),a.y,0); reelGroup.localToWorld(tmp); tmp.project(camera);   // top of the coil
+    const x=(tmp.x+1)/2*b.width, y=(-tmp.y+1)/2*b.height; if(tmp.z>1) return;
+    chips.push({a,x,y});
+  });
+  chips.sort((p,q)=>p.x-q.x);
+  for(let i=1;i<chips.length;i++){for(let j=0;j<i;j++){const p=chips[j],q=chips[i];if(Math.abs(p.x-q.x)<130&&Math.abs(p.y-q.y)<52){q.y=p.y-54;}}}
+  H.innerHTML=chips.map(({a,x,y})=>{const st=r.spaces[a.space];const top=st[st.length-1];const on=sel&&sel.space===a.space;const tot=st.reduce((q,w)=>q+w.length,0);
+    return `<div class="chip ${on?'sel':''}" style="left:${x}px;top:${y-22}px" data-s="${a.space}"><b>${top.par?top.par.map(c=>`<span class="dot" style="background:${COLORS[c]};margin-right:2px"></span>`).join('')+' paralleled · '+esc(top.size):`<span class="dot" style="background:${COLORS[top.color]}"></span>${cap(top.color)} · ${esc(top.size)}`}</b>${st.length>1?st.length+' cuts · ':''}${tot.toLocaleString()} ft${top.dest?`<div style="opacity:.8">${st.length>1?'pull 1: ':''}${esc(top.dest)}</div>`:''}<div class="stem"></div></div>`;}).join('');
+}
+$('hud').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c){const s=+c.dataset.s;select(s,JOB.reels[cur].spaces[s].length-1);}});
+
+/* ---------- selection card ---------- */
+function select(space,stack){
+  sel=space===null||space===undefined?null:{space,stack};
+  const r=JOB.reels[cur], C=$('card');
+  if(!sel){C.style.display='none';renderSpaces();if($('sect').style.display!=='none')renderSect();return;}
+  const st=r.spaces[space], run=st[stack];
+  if(!run){sel=null;C.style.display='none';renderSpaces();return;}
+  C.style.display='block';
+  C.innerHTML=`<div class="micro">Space ${space+1} · cut ${stack+1} of ${st.length} · <span style="color:var(--red)">Pull ${st.length-stack}</span></div>
+  <h4>${run.par?'Paralleled set':esc(cap(run.color))} ${esc(run.size)}<i>.</i></h4>${run.par?`<div class="dots" style="margin:0 0 6px">${run.par.map(c=>`<i style="background:${COLORS[c]}"></i>`).join('')}</div> <span style="font-size:12px;color:var(--ink2)">${run.par.map(cap).join(' · ')}${run.gndSize?' (ground '+esc(run.gndSize)+')':''}</span>`:''}
+  <div class="kv">${run.dest?`<span>Goes to</span><span><b>${esc(run.dest)}</b></span>`:''}<span>Length</span><span><b>${run.length.toLocaleString()} ft</b></span><span>Wire</span><span>${esc(run.size)} ${esc(run.mat)} ${esc(run.insul)}</span><span>Pulling head</span><span>${run.head?run.headLen+' in':'none'}</span><span>Order</span><span>${st.length>1?(stack===st.length-1?'outside · pulled first':stack===0?'against the drum · pulled last':'middle layer'):'single cut'}</span></div>
+  <div class="btns" style="margin-top:12px"><button data-e="1">Edit</button>${st.length<6?'<button data-a="1">+ Add a cut</button>':''}<button data-x="1">Remove this cut</button></div>`;
+  if($('sect').style.display!=='none')renderSect();
+  C.onclick=e=>{const t=e.target;if(t.dataset.e){$('tabs').querySelector('[data-t=build]').click();const el=document.querySelector(`.stack[data-k="${stack}"] input`);if(el)el.focus();}
+    if(t.dataset.a){$('tabs').querySelector('[data-t=build]').click();$('sLen').focus();$('sLen').scrollIntoView({behavior:'smooth',block:'center'});} if(t.dataset.x){st.splice(stack,1);rebuild();select(null);}};
+  renderSpaces();
+}
+function addStack(space){const st=JOB.reels[cur].spaces[space];const src=st[st.length-1];st.push({...src,length:src.length});assignHeads(JOB.reels[cur]);rebuild();select(space,st.length-1);}
+function addStackAll(){const r=JOB.reels[cur];const len=+$('sLen').value||0,dest=$('sDest').value.trim();if(!len)return;let n=0;
+  r.spaces.forEach(st=>{if(!st.length)return;const src=st[st.length-1];st.push({...src,length:len,dest,headLen:0});n++;});
+  if(!n)return;assignHeads(r);rebuild();$('sDest').value='';const first=r.spaces.findIndex(st=>st.length);select(first,r.spaces[first].length-1);}
+function stackCount(r){return r.spaces.reduce((m,st)=>Math.max(m,st.length),0);}
+function renderStackList(){const r=JOB.reels[cur];const n=stackCount(r);
+  $('stackList').innerHTML=n?Array.from({length:n},(_,k)=>{const cuts=r.spaces.map((st,i)=>st[k]?{i,run:st[k]}:null).filter(Boolean);const dest=(cuts.find(c=>c.run.dest)||{run:{}}).run.dest||'';const lens=[...new Set(cuts.map(c=>c.run.length))];
+    return `<div class="stack" data-sk="${k}"><div class="t"><b>Cut ${k+1} · Pull ${n-k}${k===0?' · against the drum':''}${k===n-1?' · outside, pulled first':''}</b><span>${cuts.length} space${cuts.length>1?'s':''}</span></div>
+      <div class="f"><div><label>Field designation</label><input data-sf="dest" value="${esc(dest)}" placeholder="Where this pull goes"></div><div><label>Length, all cuts (ft)</label><input data-sf="length" type="number" value="${lens.length===1?lens[0]:''}" placeholder="${lens.length>1?'mixed: '+lens.join('/'):''}"></div>
+      <div class="w"><div class="dots">${cuts.map(c=>`<i style="background:${COLORS[c.run.color]}"></i>`).join('')}</div> ${cuts.map(c=>cap(c.run.color)+' '+c.run.size).join(' · ')}</div></div>
+      <div class="btns"><button class="b sm ghost" data-sdel="${k}">Remove this cut from every space</button></div></div>`;}).join(''):'<div class="status">No cuts yet. Build the reel first.</div>';}
+$('addStackBtn').onclick=addStackAll;
+$('stackList').addEventListener('change',e=>{const t=e.target,f=t.dataset.sf;if(!f)return;const k=+t.closest('.stack').dataset.sk;const r=JOB.reels[cur];
+  r.spaces.forEach(st=>{if(!st[k])return;if(f==='length'){if(+t.value>0)st[k].length=+t.value;}else st[k].dest=t.value.trim();});rebuild();});
+$('stackList').addEventListener('click',e=>{const t=e.target;if(t.dataset.sdel!==undefined){const k=+t.dataset.sdel;JOB.reels[cur].spaces.forEach(st=>{if(st[k])st.splice(k,1);});rebuild();select(null);}});
+
+/* ---------- panel ---------- */
+SIZES.forEach(s=>{$('bSize').add(new Option(s,s));$('bGnd').add(new Option(s,s));}); $('bSize').value='3/0'; $('bGnd').value='6';
+let preset='480';
+$('presets').onclick=e=>{const b=e.target.closest('button');if(!b)return;preset=b.dataset.p;document.querySelectorAll('#presets button').forEach(x=>x.classList.toggle('on',x===b));};
+$('buildBtn').onclick=()=>{const r=JOB.reels[cur];const P=PRESET[preset];const len=+$('bLen').value||0,size=$('bSize').value,mat=$('bMat').value,ins=$('bIns').value,heads=$('bHeads').checked;
+  r.voltage=P.v; r.spaces=Array.from({length:SLOTS},()=>[]);
+  const dest=$('bDest').value.trim(); const mk=(color,sz,m)=>({color,size:sz,mat:m,insul:ins,length:len,head:heads,headLen:0,dest});
+  if(r.asset==='mroll'){const set=[...P.ph];if($('bNeu').value==='1')set.push(P.neu);set.push('green');r.spaces[0]=[{...mk(P.ph[0],size,mat),par:set,gndSize:$('bGnd').value}];}
+  else{P.ph.forEach((c,i)=>r.spaces[i]=[mk(c,size,mat)]); if($('bNeu').value==='1') r.spaces[3]=[mk(P.neu,size,mat)]; r.spaces[4]=[mk('green',$('bGnd').value,'Cu')];}
+  assignHeads(r); rebuild(); select(null);};
+$('clearBtn').onclick=()=>{JOB.reels[cur].spaces=Array.from({length:SLOTS},()=>[]);rebuild();select(null);};
+['rNum','rFeeder','rArea'].forEach(id=>$(id).oninput=()=>{const r=JOB.reels[cur];r[{rNum:'reel',rFeeder:'feeder',rArea:'area'}[id]]=$(id).value;renderTabs();$('stTitle').innerHTML=`Reel ${esc(r.reel||'')}<i>.</i>`; if(id==='rNum') rebuild();});
+$('rAsset').onchange=()=>{JOB.reels[cur].asset=$('rAsset').value;rebuild();};
+$('rFinish').onchange=()=>{JOB.reels[cur].finish=$('rFinish').value;rebuild();};
+$('addReel').onclick=()=>{JOB.reels.push(newReel({reel:String(1000+JOB.reels.length+1)}));cur=JOB.reels.length-1;show();};
+$('dupReel').onclick=()=>{const r=JOB.reels[cur];const c=JSON.parse(JSON.stringify(r));c.reel=String((+r.reel||1000)+1);JOB.reels.splice(cur+1,0,c);cur++;show();};
+$('delReel').onclick=()=>{if(JOB.reels.length<2)return;JOB.reels.splice(cur,1);cur=Math.max(0,cur-1);show();};
+['jName','jNum','jCust','jBy','jDate'].forEach(id=>$(id).oninput=()=>{JOB[{jName:'name',jNum:'number',jCust:'customer',jBy:'orderedBy',jDate:'dateNeeded'}[id]]=$(id).value;renderLines();});
+$('tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));['build','sheet','order'].forEach(t=>$('pane-'+t).style.display=t===b.dataset.t?'':'none');if(b.dataset.t==='order')renderLines();};
+
+function renderTabs(){const S=buildSteps();$('reelTabs').innerHTML=JOB.reels.map((r,i)=>{const mine=S.filter(x=>x.ri===i);const rng=mine.length?` <span style="opacity:.55;font-size:11px">${mine.length>1?'steps '+mine[0].n+' to '+mine[mine.length-1].n:'step '+mine[0].n}</span>`:'';return `<button class="${i===cur?'on':''}" data-i="${i}">Reel ${esc(r.reel||'?')}${rng}</button>`;}).join('');}
+$('reelTabs').onclick=e=>{const b=e.target.closest('button');if(b){cur=+b.dataset.i;show();}};
+function renderSpaces(){
+  const r=JOB.reels[cur]; const wood=r.asset==='mroll';
+  $('spaces').innerHTML=r.spaces.map((st,i)=>{if(wood&&i>0)return '';const on=sel&&sel.space===i;const top=st[st.length-1];
+    return `<div class="sp ${on?'on':''}" data-i="${i}" ${wood?'style="grid-column:1/6"':''}><div class="n">${wood?'Paralleled set':i+1}</div>${st.length?`<span class="sw" style="background:${top.par?`linear-gradient(90deg,${top.par.map(c=>COLORS[c]).join(',')})`:COLORS[top.color]}"></span>${st.length>1?st.length+' cuts':cap(top.color)}<br>${st.reduce((q,w)=>q+w.length,0)} ft`:'<span class="sw" style="border:1px dashed var(--line)"></span>empty'}</div>`;}).join('');
+  const S=$('stacks'); if(!sel){S.innerHTML='<div class="status">Select a space to see and edit its cuts. Cut 1 sits against the drum; the outside cut is Pull 1.</div>';return;}
+  const st=r.spaces[sel.space];
+  S.innerHTML=(st.length?st.map((run,k)=>`<div class="stack ${sel.stack===k?'on':''}" data-k="${k}"><div class="t"><b>Cut ${k+1} · Pull ${st.length-k}${run.dest?' · '+esc(run.dest):''}</b><span>${k===0?'winds first':''}${k===st.length-1&&st.length>1?' · outside, pulled first':''}</span></div>
+    <div class="f">
+      <div><label>Color</label><select data-f="color">${Object.keys(COLORS).map(c=>`<option ${c===run.color?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div><label>Size</label><select data-f="size">${SIZES.map(s=>`<option ${s===run.size?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label>Length (ft)</label><input data-f="length" type="number" value="${run.length}"></div>
+      <div><label>Material</label><select data-f="mat"><option ${run.mat==='Al'?'selected':''}>Al</option><option ${run.mat==='Cu'?'selected':''}>Cu</option></select></div>
+      <div><label>Insulation</label><select data-f="insul">${['THHN/THWN-2','XHHW-2','USE-2','RHW-2'].map(s=>`<option ${s===run.insul?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div><label>Pulling head</label><div style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-f="head" ${run.head?'checked':''}><input data-f="headLen" type="number" value="${run.headLen||''}" style="width:70px"> in</div></div>
+      <div class="w"><label>Field designation (this cut)</label><input data-f="dest" value="${esc(run.dest||'')}"></div>
+      ${run.par?`<div class="w"><label>Paralleled set</label><div class="dots">${run.par.map(c=>`<i style="background:${COLORS[c]}"></i>`).join('')}</div> ${run.par.map(cap).join(' · ')}</div>`:''}
+    </div>
+    <div class="btns"><button class="b sm ghost" data-del="${k}">Remove cut</button></div></div>`).join(''):'<div class="status">Empty space.</div>')+
+    `<div class="btns"><button class="b sm ghost" data-add="1">+ Add a cut to this space only</button></div>`;
+}
+$('spaces').onclick=e=>{const d=e.target.closest('.sp');if(d){const i=+d.dataset.i;const st=JOB.reels[cur].spaces[i];if(st.length)select(i,st.length-1);else{sel={space:i,stack:0};$('card').style.display='none';renderSpaces();}}};
+$('stacks').addEventListener('change',e=>{const t=e.target,f=t.dataset.f;if(!f)return;const k=+t.closest('.stack').dataset.k;const run=JOB.reels[cur].spaces[sel.space][k];
+  if(f==='length'||f==='headLen')run[f]=+t.value;else if(f==='head')run.head=t.checked;else run[f]=t.value; rebuild(); select(sel.space,k);});
+$('stacks').addEventListener('click',e=>{const t=e.target;if(t.dataset.add){const st=JOB.reels[cur].spaces[sel.space];if(st.length)addStack(sel.space);else{st.push({color:'brown',size:$('bSize').value,mat:$('bMat').value,insul:$('bIns').value,length:+$('bLen').value||100,head:$('bHeads').checked,headLen:0});assignHeads(JOB.reels[cur]);rebuild();select(sel.space,0);}}
+  if(t.dataset.del!==undefined){JOB.reels[cur].spaces[sel.space].splice(+t.dataset.del,1);rebuild();select(sel.space,0);}});
+
+function rebuild(){const r=JOB.reels[cur];assignHeads(r);buildReel(r);renderSpaces();renderStackList();renderLines();renderSteps();renderTabs();if($('acc').style.display!=='none')renderAcc();if($('sect').style.display!=='none')renderSect();
+  const wd=r.asset==='mroll',G=assetGeo(r.asset);const fullest=Math.max(0,...r.spaces.map(st=>st.length?(st[st.length-1]._r1-G.hub)/(G.rmax-G.hub):0));
+  $('stSub').textContent=`${r.voltage||''}${r.feeder?' · feeder '+r.feeder:''}${r.area?' · '+r.area:''} · ${reelRuns(r).reduce((a,b)=>a+b.length,0).toLocaleString()} ft on reel${fullest?` · ${wd?'reel':'fullest '+(r.asset==='aframe'?'compartment':'space')} ${Math.round(fullest*100)}% full`:''}`;}
+function show(){const r=JOB.reels[cur];sel=null;$('card').style.display='none';$('rNum').value=r.reel;$('rFeeder').value=r.feeder;$('rArea').value=r.area;$('rAsset').value=r.asset;$('rFinish').value=r.finish||'black';$('stTitle').innerHTML=`Reel ${esc(r.reel||'')}<i>.</i>`;renderTabs();rebuild();}
+
+/* ---------- accessories ---------- */
+const ACC=[
+ {id:'MAXIS3K',name:'Maxis 3K Pro cable puller',note:'Branch and small feeders, to 1/0',grp:'pullers'},
+ {id:'MAXIS6K',name:'Maxis 6K cable puller',note:'Feeders 2/0 to 4/0, most Smart Reel pulls',grp:'pullers'},
+ {id:'MAXIS10K',name:'Maxis 10K cable puller',note:'250 kcmil and up, long runs, parallel sets',grp:'pullers'},
+ {id:'MAXISCIRC',name:'Maxis circuit puller',note:'Quick pulls in small conduit',grp:'pullers'},
+ {id:'ROPE600',name:'Pulling rope, 1/2 in x 600 ft',note:'Double braid polyester',grp:'rope'},
+ {id:'ROPE1000',name:'Pulling rope, 1/2 in x 1,000 ft',note:'For the long runs',grp:'rope'},
+ {id:'SWIVEL10K',name:'Pulling swivel, 10K',note:'Between rope and head, keeps the twist out',grp:'rig'},
+ {id:'LUBEGAL',name:'Pulling lubricant, 1 gal',note:'About one gallon per 1,000 ft of pull',grp:'lube'},
+ {id:'LUBEPAIL',name:'Pulling lubricant, 5 gal pail',note:'Big jobs',grp:'lube'},
+ {id:'REELJACK',name:'Reel jack stand, pair',note:'Holds the M REEL at the feed end',grp:'reel'},
+ {id:'REELROLLER',name:'Reel roller',note:'Rolls the reel on the floor so it pays out flat',grp:'reel'},
+ {id:'SHEAVE',name:'Feeding sheave / conduit mouthpiece',note:'Protects the jacket at the conduit lip',grp:'rig'},
+ {id:'GRIPKIT',name:'Basket grip kit, feeder sizes',note:'Backup to the installed pulling heads',grp:'rig'},
+ {id:'CUTTER',name:'Ratchet cable cutter',note:'For the cuts on site',grp:'tools'},
+ {id:'FISHTAPE',name:'Fish tape / measuring tape, 200 ft',note:'Check the run before the pull',grp:'tools'},
+];
+JOB.acc={};
+function awg(sz){const i=SIZES.indexOf(sz);return i<0?10:i;}
+function accSuggest(){const runs=JOB.reels.flatMap(reelRuns);if(!runs.length)return {};
+  const maxIdx=Math.max(...runs.map(r=>awg(r.size))), longest=Math.max(...runs.map(r=>r.length)), total=runs.reduce((a,b)=>a+b.length,0), parallel=runs.some(r=>r.par);
+  const sug={};
+  const puller=(maxIdx>=SIZES.indexOf('250')||parallel)?'MAXIS10K':maxIdx>=SIZES.indexOf('2/0')?'MAXIS6K':'MAXIS3K';
+  sug[puller]={q:1,why:`for ${SIZES[maxIdx]} ${parallel?'parallel ':''}feeders`};
+  sug[longest>500?'ROPE1000':'ROPE600']={q:1,why:`longest run ${longest.toLocaleString()} ft`};
+  sug.SWIVEL10K={q:1,why:'pulling heads on the order'};
+  sug.LUBEGAL={q:Math.max(1,Math.ceil(total/1000)),why:`${total.toLocaleString()} ft on the order`};
+  sug.REELJACK={q:1,why:`${JOB.reels.length} reel${JOB.reels.length>1?'s':''} to feed`};
+  sug.SHEAVE={q:1,why:'protects the jacket'};
+  return sug;}
+function renderAcc(){const sug=accSuggest();
+  const GRP={pullers:'Wire pullers',rope:'Pull rope',rig:'Rigging',lube:'Lubricant',reel:'Reel handling',tools:'Tools'};let last='';
+  $('accList').innerHTML=ACC.map(a=>{const q=JOB.acc[a.id]||0,sg=sug[a.id];const head=a.grp!==last?`<div class="micro" style="margin:14px 0 2px">${GRP[a.grp]}</div>`:'';last=a.grp;return head+`<div class="ai ${q?'on':''}"><div><b>${esc(a.name)}</b><small>${esc(a.note)}</small>${sg?`<span class="sug">Suggested · ${esc(sg.why)}${sg.q>1?' · qty '+sg.q:''}</span>`:''}</div>
+    <div class="qty"><button data-d="-1" data-id="${a.id}">−</button><span>${q}</span><button data-d="1" data-id="${a.id}">+</button>${sg&&!q?`<button data-take="${a.id}" style="width:auto;padding:0 10px;border-radius:999px;font-size:11px">Add ${sg.q}</button>`:''}</div></div>`;}).join('');
+  const n=Object.values(JOB.acc).reduce((a,b)=>a+b,0);$('accN').textContent=n?n:'';}
+$('accBtn').onclick=()=>{$('acc').style.display='';renderAcc();};
+$('accClose').onclick=()=>{$('acc').style.display='none';};
+$('accList').onclick=e=>{const t=e.target.closest('button');if(!t)return;if(t.dataset.take){JOB.acc[t.dataset.take]=accSuggest()[t.dataset.take].q;}else{const id=t.dataset.id;JOB.acc[id]=Math.max(0,(JOB.acc[id]||0)+(+t.dataset.d));if(!JOB.acc[id])delete JOB.acc[id];}renderAcc();renderLines();};
+
+/* ---------- build sequence across every reel ---------- */
+function buildSteps(){const out=[];let n=0;
+  JOB.reels.forEach((r,ri)=>{const m=stackCount(r);
+    for(let k=0;k<m;k++){const cuts=[];r.spaces.forEach((st,i)=>{if(st[k])cuts.push({space:i,run:st[k],of:st.length,pull:st.length-k});});if(!cuts.length)continue;
+      out.push({n:++n,ri,r,k,of:m,pull:m-k,cuts,plain:m===1,dest:(cuts.find(c=>c.run.dest)||{run:{}}).run.dest||'',ft:cuts.reduce((a,c)=>a+c.run.length*(c.run.par?c.run.par.length:1),0)});}});
+  return out;}
+function stepOf(ri,k){const s=buildSteps().find(x=>x.ri===ri&&x.k===k);return s?s.n:'';}
+function stepLabel(s){return s.plain?'Cut 1 · plain reel, one pull':`Cut ${s.k+1} of ${s.of} · <span style="color:var(--red)">Pull ${s.pull}</span>${s.k===0?' · against the drum':s.k===s.of-1?' · outside, pulled first':''}`;}
+function cutSummary(c){const run=c.run;return run.par?`${run.par.map(cap).join('/')} paralleled ${esc(run.size)}`:`${cap(run.color)} ${esc(run.size)}`;}
+function renderSteps(){const S=buildSteps();const el=$('steps');if(!el)return;if(!S.length){el.innerHTML='<div class="status">Nothing built yet.</div>';return;}
+  let last=-1;el.innerHTML=S.map(s=>{const head=s.ri!==last?`<div class="s reelhead">Reel ${s.ri+1} of ${JOB.reels.length} · #${esc(s.r.reel)}${s.r.feeder?' · feeder '+esc(s.r.feeder):''}${s.r.area?' · '+esc(s.r.area):''} · ${s.r.asset==='mroll'?'REEL MATE':s.r.asset==='aframe'?'A-frame':'M REEL'}</div>`:'';last=s.ri;
+    return head+`<div class="s" data-ri="${s.ri}" data-k="${s.k}"><div class="n">${s.n}</div><div><b>${stepLabel(s)}</b><i>${s.cuts.map(c=>`<span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[c.run.par?c.run.par[0]:c.run.color]};margin-right:3px;vertical-align:-1px"></span>${s.r.asset==='mroll'?'':'S'+(c.space+1)+' '}${cutSummary(c)} ${c.run.length.toLocaleString()} ft`).join(' · ')}</i>${s.dest?`<i>Goes to <b style="display:inline">${esc(s.dest)}</b></i>`:''}</div><div style="text-align:right;color:var(--ink2)">${s.ft.toLocaleString()} ft</div></div>`;}).join('');}
+$('steps').onclick=e=>{const d=e.target.closest('.s[data-ri]');if(!d)return;cur=+d.dataset.ri;show();const k=+d.dataset.k;const sp=JOB.reels[cur].spaces.findIndex(st=>st[k]);if(sp>=0)select(sp,k);$('tabs').querySelector('[data-t=build]').click();};
+
+/* ---------- section drawing (SVG): the reel cut through the axle, spaces opened up so the cuts can be read ---------- */
+function stackRadii(r){const G=assetGeo(r.asset),wood=r.asset==='mroll',af=r.asset==='aframe';const w=wood?RM.spool:af?AF.cmptW:D.spoolW;
+  return r.spaces.map((st,i)=>{if(wood&&i>0)return[];let rr=G.hub+.003;return st.map(run=>{const od=OD[run.size]||.5,d=od*IN,par=(wood&&run.par)?run.par.length:1;const r1=Math.min(G.rmax,Math.max(rr+d*2.2,fillR(rr,run.length*par,od,w,G.flOD)));const o={r0:rr/IN,r1:r1/IN,od};rr=r1;return o;});});}
+function lum(hex){const c=parseInt(hex.slice(1),16);const r=c>>16&255,g=c>>8&255,b=c&255;return (r*.299+g*.587+b*.114)/255;}
+function sectionSVG(r,opt={}){
+  const wood=r.asset==='mroll',af=r.asset==='aframe',G=assetGeo(r.asset),RR=stackRadii(r),ri=JOB.reels.indexOf(r);
+  const W=1000,H=opt.compact?360:430,pad=14,top=opt.compact?34:96,bot=H-58,core=30;   // core band 'core' px tall under bot, axle under that
+  const flOD=wood?RM.woodFlOD:af?AF.flOD:D.spoolFlOD, bigR=wood||!af?30:flOD/2, coreR=(wood?RM.woodCoreD:af?AF.drumD:D.coreD)/2;
+  const maxFill=Math.max(0,...RR.flat().map(o=>o.r1)), fullPct=Math.round(maxFill/(flOD/2)*100);
+  const drawR=Math.min(bigR,Math.max(coreR+8,maxFill/.8));   // zoom the radius axis in when the reel is mostly empty, so the cuts read
+  const py=inch=>inch<=coreR?bot:bot-((Math.min(inch,drawR)-coreR)/(drawR-coreR))*(bot-top);  // radius in inches to y, the core band sits under bot
+  const cols=wood?1:SLOTS, flW=wood?22:af?8:26, wallW=af?6:9, colW=(W-2*pad-2*flW-(cols-1)*wallW)/cols;
+  const colX=i=>pad+flW+i*(colW+wallW);
+  const fillC=r.finish==='orange'?'#f27a1a':r.finish==='blue'?'#2757c9':'#151515';
+  let g='',defs='';
+  // hub / core and axle
+  g+=`<rect x="${pad}" y="${bot}" width="${W-2*pad}" height="${core}" fill="#7d7873"/>`;
+  g+=`<rect x="${pad-6}" y="${bot+core-6}" width="${W-2*pad+12}" height="6" fill="#3a3733"/><text x="${W/2}" y="${bot+core+16}" font-size="10" fill="#514c45" text-anchor="middle" letter-spacing="2">AXLE · ${wood?'REEL MATE, WOOD REEL PARALLELED':af?'A-FRAME · 5 COMPARTMENTS':'M REEL · 5 SPACES'}</text>`;
+  // flanges at both ends
+  [pad,W-pad-flW].forEach((x,s)=>{g+=`<rect x="${x}" y="${py(bigR)}" width="${flW}" height="${bot+core-py(bigR)}" rx="2" fill="${wood?'#8a5a2b':fillC}"/>`;
+    if(!af){const lab=s?'GROUND SIDE':'REEL '+(r.reel||'');g+=`<text transform="translate(${x+flW/2+4} ${py(bigR)+14}) rotate(90)" font-size="9" fill="#fff" letter-spacing="2" font-weight="700">${esc(lab)}</text>`;}});
+  // spool walls between spaces
+  if(!wood)for(let i=1;i<cols;i++){const x=colX(i)-wallW;g+=`<rect x="${x}" y="${py(flOD/2)}" width="${wallW}" height="${bot+core-py(flOD/2)}" fill="${af?'#8f8a84':'#e6e1d8'}" stroke="#b8b0a2" stroke-width="1"/>`;}
+  if(wood){const fl=(RM.woodID/2+RM.woodFlT)/RM.woodOAL;g+=`<rect x="${pad+flW}" y="${py(flOD/2)}" width="14" height="${bot+core-py(flOD/2)}" fill="#a9763f"/><rect x="${W-pad-flW-14}" y="${py(flOD/2)}" width="14" height="${bot+core-py(flOD/2)}" fill="#a9763f"/>`;}
+  // the wire
+  const leaders=[];let pid=0;const uid='g'+Math.max(0,ri)+Math.random().toString(36).slice(2,7);
+  RR.forEach((st,i)=>{const x=colX(i)+(wood?14:0),cw=colW-(wood?28:0);
+    st.forEach((o,k)=>{const run=r.spaces[i][k],colors=(wood&&run.par)?run.par:[run.color],y1=py(o.r1),y0=py(o.r0),h=y0-y1;const on=sel&&sel.space===i&&sel.stack===k;
+      const id=uid+'p'+(pid++);const sw=Math.max(6,o.od*11);
+      if(colors.length>1){defs+=`<pattern id="${id}" width="${sw*colors.length}" height="10" patternUnits="userSpaceOnUse">${colors.map((c,j)=>`<rect x="${j*sw}" y="0" width="${sw}" height="10" fill="${COLORS[c]}"/>`).join('')}</pattern>`;}
+      const fillv=colors.length>1?`url(#${id})`:COLORS[colors[0]];
+      const step=stepOf(ri,k);const tx=lum(COLORS[colors[0]])>.62?'#141414':'#fff';
+      defs+=`<clipPath id="c${id}"><rect x="${x}" y="${y1}" width="${cw}" height="${h}"/></clipPath>`;
+      g+=`<g class="band" data-s="${i}" data-k="${k}"><rect class="bandfill" x="${x}" y="${y1}" width="${cw}" height="${h}" fill="${fillv}"/><g clip-path="url(#c${id})">`;
+      // turn lines
+      const ts=Math.max(3,o.od*11*.87);for(let yy=y0-ts;yy>y1+1;yy-=ts)g+=`<line x1="${x}" x2="${x+cw}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>`;
+      if(k>0)g+=`<rect x="${x}" y="${y0-2}" width="${cw}" height="3" fill="#c9a36b"/><rect x="${x}" y="${y0-3}" width="${cw}" height="1" fill="#6b4a22"/>`;
+      g+=`</g>`; if(on)g+=`<rect x="${x-2}" y="${y1-2}" width="${cw+4}" height="${h+4}" fill="none" stroke="#E01B22" stroke-width="3"/>`;
+      // pulling head on the outer end of the cut
+      if(run.head){g+=`<g transform="translate(${x+cw-30} ${y1-1})"><rect x="0" y="-5" width="24" height="10" rx="4" fill="#c9cccf" stroke="#6f7478"/><circle cx="21" cy="0" r="2.4" fill="none" stroke="#6f7478" stroke-width="1.4"/><rect x="0" y="-5" width="5" height="10" rx="2" fill="#2a2a2a"/></g>`;}
+      g+=`<g clip-path="url(#c${id})">`;
+      const pull=st.length-k;
+      if(opt.compact){ // warehouse: big step number, cut/pull under it
+        if(h>=26)g+=`<text x="${x+cw/2}" y="${y1+h/2+6}" text-anchor="middle" font-size="18" font-weight="700" fill="${tx}">${step}</text>`;
+        else leaders.push({x:x+cw/2,y:y1,text:[`STEP ${step}`],col:i});
+      }else{
+        const l1=`CUT ${k+1} · PULL ${pull}`,l2=`${run.length.toLocaleString()} ft · ${run.par?'Paralleled '+run.par.map(cap).join('/'):cap(run.color)} ${run.size} ${run.mat||''}`,l3=run.dest||'';
+        if(h>=44){g+=`<text x="${x+10}" y="${y1+18}" font-size="10" letter-spacing="1.6" font-weight="700" fill="${tx}">${esc(l1)}</text><text x="${x+10}" y="${y1+33}" font-size="11" fill="${tx}">${esc(l2)}</text>${l3&&h>=58?`<text x="${x+10}" y="${y1+48}" font-size="10" fill="${tx}" opacity=".85">${esc(l3)}</text>`:''}`;}
+        else if(h>=24){g+=`<text x="${x+10}" y="${y1+h/2+4}" font-size="10" fill="${tx}"><tspan font-weight="700" letter-spacing="1.2">${esc(l1)}</tspan> · ${esc(run.length.toLocaleString())} ft ${esc(cap(run.color))} ${esc(run.size)}</text>`;}
+        else leaders.push({x:x+cw/2,y:y1,text:[l1,l2+(l3?' · '+l3:'')],col:i});
+      }
+      g+=`</g></g>`;});
+    // space number and total
+    const tot=r.spaces[i].reduce((a,b)=>a+b.length,0);
+    g+=`<text x="${x+cw/2}" y="${bot+12}" text-anchor="middle" font-size="9.5" letter-spacing="2" fill="#fff" font-weight="700">${wood?'WOOD REEL':(af?'COMPARTMENT ':'SPACE ')+(i+1)}</text><text x="${x+cw/2}" y="${bot+23}" text-anchor="middle" font-size="9" letter-spacing="1" fill="#fff" opacity=".85">${tot?tot.toLocaleString()+' FT'+(st.length?' · '+Math.round(st[st.length-1].r1/(flOD/2)*100)+'% FULL':''):'EMPTY'}</text>`;});
+  // leaders for cuts too thin to label inside: text above the flange line
+  const rows={};leaders.forEach(l=>{const n=rows[l.col]=(rows[l.col]||0)+1;const ty=top-14-(n-1)*(opt.compact?16:26);g+=`<line x1="${l.x}" y1="${l.y}" x2="${l.x}" y2="${ty+4}" stroke="#514c45" stroke-width="1" stroke-dasharray="2 2"/><circle cx="${l.x}" cy="${l.y}" r="2.5" fill="#141414"/>`;
+    l.text.forEach((t,j)=>{g+=`<text x="${l.x}" y="${ty-(l.text.length-1-j)*12}" text-anchor="middle" font-size="${j?9:9.5}" ${j?'':'font-weight="700" letter-spacing="1.4"'} fill="#141414">${esc(t)}</text>`;});});
+  // outer flange line
+  g+=`<line x1="${pad}" x2="${W-pad}" y1="${py(bigR)}" y2="${py(bigR)}" stroke="#141414" stroke-width="1" opacity=".25"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk, Arial, sans-serif"><defs>${defs}</defs>${g}</svg>`;}
+function renderSect(){const r=JOB.reels[cur];$('sectTitle').innerHTML=`Reel ${esc(r.reel||'')}<i style="color:var(--red);font-style:normal">.</i> <span style="font-size:13px;color:var(--ink2);font-weight:400;letter-spacing:0">${reelRuns(r).length} cuts · ${reelRuns(r).reduce((a,b)=>a+b.length,0).toLocaleString()} ft</span>`;$('sectSvg').innerHTML=sectionSVG(r);}
+$('sectBtn').onclick=()=>{const o=$('sect').style.display==='none';$('sect').style.display=o?'':'none';$('hud').style.visibility=o?'hidden':'';$('acc').style.display='none';if(o)renderSect();};
+$('sectClose').onclick=()=>{$('sect').style.display='none';$('hud').style.visibility='';};
+$('sectSvg').onclick=e=>{const b=e.target.closest('.band');if(b)select(+b.dataset.s,+b.dataset.k);};
+
+/* ---------- P21 ---------- */
+function itemId(run){const sz=run.size.replace(/\s/g,''),col=ABBR[run.color]||run.color.toUpperCase().slice(0,3);return (run.mat||'').toLowerCase()==='al'?`LT-ALTHHN${sz}${col}STRCUT`:`LT-${sz}${col}STRCUT`;}
+function orderLines(){const lines=[];let n=0;const heads={};
+  JOB.reels.forEach(reel=>{reel.spaces.forEach((st,i)=>st.forEach((run,k)=>{
+    const cols=run.par||[run.color];
+    cols.forEach(c=>{const rr={...run,color:c,size:c==='green'&&run.gndSize?run.gndSize:run.size,mat:c==='green'&&run.gndSize?'Cu':run.mat};
+      const phase=c==='green'?'GROUND':'PHASE '+c.toUpperCase();const stack=(st.length>1?` CUT ${k+1}/${st.length} PULL ${st.length-k}`:'')+(run.dest?` (${run.dest.toUpperCase()})`:'');
+      lines.push({n:++n,qty:run.length,item:itemId(rr),desc:`${rr.size} ${(rr.mat||'').toUpperCase()==='AL'?'ALUM ':''}${rr.insul||''} ${c.toUpperCase()} STRANDED CUT`.replace(/\s+/g,' ').trim(),
+        ext:`FEEDER ${reel.feeder} (${(reel.area||'').toUpperCase()}) - ${phase} - ${reel.asset==='mroll'?'REEL MATE':reel.asset==='aframe'?'A-FRAME REEL':'SMART REEL'} ${reel.reel} CMPT ${i+1}${stack} - JOB ${JOB.number} - LOT TRACK`});
+      if(run.head){const key=rr.size+'|'+run.headLen+'|'+c+'|'+(i+1);(heads[key]=heads[key]||{qty:0,reels:new Set(),feeders:new Set(),run:rr,pos:i+1,color:c}).qty++;heads[key].reels.add(reel.reel);heads[key].feeders.add(reel.feeder);}
+    });}));});
+  Object.values(heads).forEach(h=>{const r=h.run;lines.push({n:++n,qty:h.qty,item:`PULLINGHEAD${r.size.replace(/\s/g,'')}${r.headLen}IN`,desc:`${r.size} AWG, ${r.headLen}-IN PULLING HEAD`,ext:`PULLING HEADS - ${h.color==='green'?'#'+r.size+' GROUND':'PHASE '+h.color.toUpperCase()}, 1 PER RUN (REELS ${[...h.reels].join('/')} - FEEDERS ${[...h.feeders].join('/')}) - STAGGER POS ${h.pos}`});});
+  ACC.forEach(a=>{const q=JOB.acc&&JOB.acc[a.id];if(q)lines.push({n:++n,qty:q,item:a.id,desc:a.name.toUpperCase(),ext:`PULLING EQUIPMENT - ${a.note.toUpperCase()} - JOB ${JOB.number}`});});
+  return lines;}
+function renderLines(){const L=orderLines();$('lines').innerHTML=L.length?L.map(l=>`<div class="r"><div>${l.n}</div><div>${l.qty}</div><div><b>${esc(l.item)}</b> ${esc(l.desc)}<i>${esc(l.ext)}</i></div></div>`).join(''):'<div class="status">Nothing on the order yet.</div>';}
+$('csvBtn').onclick=()=>{const L=orderLines();const q=s=>'"'+String(s).replace(/"/g,'""')+'"';const csv=['Line No,Quantity,Disposition,Lot Type,Item ID,Item Description,Extended Description,Unit Sell,Sell,Unit Cost,Cost,Supplier ID',...L.map(l=>[l.n,l.qty,'','',l.item,l.desc,l.ext,'',0,'',0,''].map(q).join(','))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`MWIRE_${JOB.number||'order'}_SO.csv`;a.click();};
+$('pdfBtn').onclick=async()=>{
+  const keep=cur, keepSel=sel, k=[theta,phi,dist]; sel=null; idle=false;
+  let html='';
+  for(let i=0;i<JOB.reels.length;i++){cur=i;const r=JOB.reels[i];const img=snap(r,[.55,1.18,r.asset==='aframe'?5.6:5.0]);
+    const rows=reelRuns(r).map(x=>`<tr><td>${x.space}${x.of>1?' · cut '+x.stack+' / pull '+(x.of-x.stack+1):''}</td><td><span class="sw" style="background:${COLORS[x.color]}"></span>${cap(x.color)}${x.par?' (parallel '+x.par.map(cap).join(', ')+')':''}</td><td>${esc(x.size)} ${esc(x.mat)} ${esc(x.insul)}</td><td>${x.length.toLocaleString()} ft</td><td>${x.head?x.headLen+' in':'none'}</td><td>${esc(x.dest||'')}</td></tr>`).join('');
+    html+=`<div class="pg cust"><div class="top"><div><img src="${img}"></div><div><div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · ${esc(JOB.customer)} · reel ${i+1} of ${JOB.reels.length}</div><h2>Reel ${esc(r.reel)}<i>.</i></h2>
+      <div class="kv"><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>On reel</span><b>${reelRuns(r).reduce((a,b)=>a+b.length,0).toLocaleString()} ft${stackCount(r)>1?' · '+stackCount(r)+' pulls stacked':''}</b></div>
+      <table><tr><th>Space</th><th>Phase</th><th>Wire</th><th>Length</th><th>Head</th><th>Goes to</th></tr>${rows}</table>${r.instructions?`<p><b>Customer note.</b> ${esc(r.instructions)}</p>`:''}</div></div>
+      <div class="sec">${sectionSVG(r)}<div class="micro" style="margin-top:4px">Section through the axle. Space widths opened up for reading; heights show how full each space is. Pull 1 is on the outside and comes off first, paper between cuts.</div></div></div><div style="break-after:page;page-break-after:always"></div>`;}
+  const L=orderLines(); html+=`<div class="pg pglines" style="display:block"><h2>Order lines<i>.</i></h2><table><tr><th>Line</th><th>Qty</th><th>Item ID</th><th>Description</th><th>Extended description</th></tr>${L.map(l=>`<tr><td>${l.n}</td><td>${l.qty}</td><td>${esc(l.item)}</td><td>${esc(l.desc)}</td><td>${esc(l.ext)}</td></tr>`).join('')}</table></div>`;
+  $('printdoc').innerHTML=html; cur=keep; buildReel(JOB.reels[cur]); [theta,phi,dist]=k; sel=keepSel;
+  setTimeout(()=>window.print(),150);
+};
+
+/* ---------- warehouse build sheet ---------- */
+function snap(r,view){buildReel(r);[theta,phi,dist]=view;setCam();renderer.setClearColor(0xf3efe8,1);renderer.render(scene,camera);const u=renderer.domElement.toDataURL('image/jpeg',.9);renderer.setClearColor(0x000000,0);return u;}
+function buildSheet(){
+  const keep=cur, keepSel=sel, k=[theta,phi,dist]; sel=null; idle=false;
+  const totalFt=JOB.reels.reduce((a,r)=>a+reelRuns(r).reduce((q,w)=>q+w.length,0),0);
+  const totalCuts=JOB.reels.reduce((a,r)=>a+reelRuns(r).length,0);
+  const S=buildSteps();
+  let html=`<div class="pg" style="display:block"><div class="micro">Warehouse build sheet · ${esc(JOB.name)} · job ${esc(JOB.number)} · ${esc(JOB.customer)} · needed ${esc(JOB.dateNeeded)}</div><h2>Build order, every reel in sequence<i>.</i></h2>
+    <div class="kv"><span>Reels</span><b>${JOB.reels.length}</b><span>Steps</span><b>${S.length}</b><span>Cuts</span><b>${totalCuts}</b><span>Footage</span><b>${totalFt.toLocaleString()} ft</b><span>Rule</span><b>Work the steps top to bottom. A step is one cut across the whole reel: wind it on every listed space, put a pulling head on the outer end, lay paper over it, then the next step. Cut 1 is against the drum; the last cut is on the outside and is Pull 1. Tag every cut with its pull number and where it goes.</b></div>
+    <table class="seq"><tr><th>Step</th><th>Reel</th><th>Cut · pull</th><th>Wind on</th><th>Tag · goes to</th><th>Footage</th><th>Done</th></tr>
+    ${S.map(s=>`<tr><td><span class="stepn">${s.n}</span></td><td><b>Reel ${s.ri+1}</b> · #${esc(s.r.reel)}${s.r.feeder?'<br>feeder '+esc(s.r.feeder):''}</td><td><b>Cut ${s.k+1}</b>${s.plain?' · plain reel':' of '+s.of+' · Pull '+s.pull}${s.k===0&&!s.plain?'<br><span style="color:#514c45">against the drum</span>':s.k===s.of-1&&!s.plain?'<br><span style="color:#514c45">outside, pulled first</span>':''}</td><td>${s.cuts.map(c=>`<span class="sw" style="background:${COLORS[c.run.par?c.run.par[0]:c.run.color]}"></span>${s.r.asset==='mroll'?'':'S'+(c.space+1)+' '}${cutSummary(c)} ${esc(c.run.mat||'')} · ${c.run.length.toLocaleString()} ft${c.run.head?' · head '+c.run.headLen+' in':''}`).join('<br>')}</td><td>${esc(s.dest)}</td><td>${s.ft.toLocaleString()} ft</td><td style="width:.3in;border:1px solid #000"></td></tr>`).join('')}</table></div><div style="break-after:page;page-break-after:always"></div>`;
+  JOB.reels.forEach((r,ri)=>{cur=ri;const img=snap(r,[.55,1.18,r.asset==='aframe'?5.6:5.0]);
+    const n=stackCount(r); let rows='';
+    for(let kk=0;kk<n;kk++){const st0=S.find(x=>x.ri===ri&&x.k===kk);if(!st0)continue;
+      rows+=`<tr class="cuthead"><td colspan="8">STEP ${st0.n} &nbsp;·&nbsp; CUT ${kk+1}${st0.plain?' · PLAIN REEL':' OF '+n+' · <span class="p">PULL '+st0.pull+'</span>'}${st0.dest?' &nbsp;·&nbsp; '+esc(st0.dest.toUpperCase()):''}</td></tr>`;
+      r.spaces.forEach((st,i)=>{const run=st[kk];if(!run)return;
+      const cols=run.par||[run.color];
+      rows+=`<tr><td>${r.asset==='mroll'?'Reel':'Space '+(i+1)}</td><td>Cut ${kk+1} · Pull ${st.length-kk}</td><td>${cols.map(c=>`<span class="sw" style="background:${COLORS[c]}"></span>`).join('')}${run.par?'Paralleled '+run.par.map(cap).join(', '):cap(run.color)}</td><td>${esc(run.size)} ${esc(run.mat)} ${esc(run.insul)}${run.gndSize?' · gnd '+esc(run.gndSize)+' Cu':''}</td><td>${run.length.toLocaleString()} ft</td><td>${run.head?run.headLen+' in':'none'}</td><td>${esc(run.dest||'')}</td><td style="width:.3in;border:1px solid #000"></td></tr>`;});
+      if(kk<n-1) rows+=`<tr><td colspan="8" style="background:#f1ece3;font-size:9px;letter-spacing:.1em;text-transform:uppercase">Paper separator over cut ${kk+1} on every space, then step ${st0.n+1}</td></tr>`;}
+    const mine=S.filter(x=>x.ri===ri);
+    html+=`<div class="pg" style="grid-template-columns:3.4in 1fr"><div><img src="${img}"><div class="wh">${sectionSVG(r,{compact:true})}</div><div class="micro" style="margin-top:4px">Section: the number on each cut is its step</div></div><div>
+      <div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · reel ${ri+1} of ${JOB.reels.length}${mine.length?' · steps '+mine[0].n+(mine.length>1?' to '+mine[mine.length-1].n:''):''}</div><h2>Reel ${ri+1} · #${esc(r.reel)}<i>.</i></h2>
+      <div class="kv"><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>On reel</span><b>${reelRuns(r).reduce((q,w)=>q+w.length,0).toLocaleString()} ft</b>${r.instructions?`<span>Note</span><b>${esc(r.instructions)}</b>`:''}</div>
+      <table><tr><th>Where</th><th>Cut · pull</th><th>Color</th><th>Wire</th><th>Length</th><th>Head</th><th>Tag · goes to</th><th>Done</th></tr>${rows}</table>
+      <p style="font-size:10px;color:#514c45;margin-top:8px">Wind in step order. Install the pulling head on the outer end of every cut before the next cut goes on. Mark the reel ${esc(r.reel)}${r.feeder?' · feeder '+esc(r.feeder):''}.</p></div></div><div style="break-after:page;page-break-after:always"></div>`;});
+  const acc=ACC.filter(a=>JOB.acc[a.id]);
+  if(acc.length) html+=`<div class="pg" style="display:block"><h2>Ship with the reels<i>.</i></h2><table><tr><th>Qty</th><th>Item</th><th>Note</th><th>Done</th></tr>${acc.map(a=>`<tr><td>${JOB.acc[a.id]}</td><td>${esc(a.name)}</td><td>${esc(a.note)}</td><td style="width:.3in;border:1px solid #000"></td></tr>`).join('')}</table></div>`;
+  $('printdoc').innerHTML=html; cur=keep; buildReel(JOB.reels[cur]); [theta,phi,dist]=k; sel=keepSel;
+  setTimeout(()=>window.print(),150);
+}
+$('buildSheetBtn').onclick=buildSheet;
+
+/* ---------- sheet ---------- */
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const CN=Object.keys(COLORS);
+async function parsePDF(file){
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const job={name:'',number:'',orderedBy:'',dateNeeded:'',customer:'',reels:[]};
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p); const tc=await page.getTextContent();
+    const items=tc.items.filter(i=>i.str.trim()).map(i=>({s:i.str.trim(),x:i.transform[4],y:i.transform[5]})); items.sort((a,b)=>b.y-a.y||a.x-b.x);
+    const lines=[]; for(const it of items){const Ln=lines[lines.length-1]; if(Ln&&Math.abs(Ln.y-it.y)<3)Ln.items.push(it); else lines.push({y:it.y,items:[it]});}
+    lines.forEach(Ln=>{Ln.items.sort((a,b)=>a.x-b.x);Ln.t=Ln.items.map(i=>i.s).join(' ');});
+    const text=lines.map(l=>l.t).join('\n');
+    if(p===1){job.number=(text.match(/Job Number\s*([A-Z0-9-]+)/i)||[])[1]||'';job.orderedBy=(text.match(/Ordered By\s*(.+?)\s+Phone/i)||[])[1]||'';job.dateNeeded=(text.match(/Date Needed\s*([\d\/]+)/i)||[])[1]||'';const first=lines.find(l=>!/Job Number/i.test(l.t)&&!/ORDER FORM/i.test(l.t));job.name=first?first.t.replace(/Job Number.*$/i,'').trim():'';}
+    const reelId=(text.match(/REEL ID #:\s*([A-Z0-9-]+)/i)||[])[1]; if(!reelId) continue;
+    const reel=newReel({reel:reelId,feeder:(text.match(/Feeder ID#\(s\):\s*([A-Z0-9, \/-]+?)(?:\n|$)/i)||[])[1]||'',area:(text.match(/AREA:\s*(.+?)(?:\n|$)/i)||[])[1]||'',voltage:(text.match(/\b(\d{3}V)\b/)||[])[1]||''});
+    try{const an=await page.getAnnotations();reel.instructions=an.filter(a=>/FreeText|Text/.test(a.subtype)).map(a=>(a.contentsObj&&a.contentsObj.str)||a.contents||'').map(s=>s.trim()).filter(Boolean).join(' ');}catch(e){}
+    const heads=/pull/i.test(reel.instructions);
+    const re=new RegExp('^(\\d)\\s+([\\d,]+)\\s+('+CN.join('|')+'|grey)\\s+(\\d+\\/0|\\d+|#\\d+)\\b','i');
+    const byC={};
+    for(let i=0;i<lines.length;i++){const m=lines[i].t.match(re); if(!m) continue; const look=lines[i].t+' '+(lines[i+1]?lines[i+1].t:'');
+      const run={color:m[3].toLowerCase().replace('grey','gray'),length:+m[2].replace(/,/g,''),size:m[4].replace('#',''),insul:(look.match(/\b(THHN\/THWN-2|THHN|THWN-2|XHHW-2|XHHW|USE-2|RHW-2)\b/i)||[])[1]||'THHN/THWN-2',mat:(look.match(/\b(Al|Cu)\b/)||[])[1]||'',head:heads,headLen:0};
+      if(!run.mat) run.mat=/^(6|8|10|12|14)$/.test(run.size)?'Cu':'Al';
+      (byC[+m[1]]=byC[+m[1]]||[]).push(run);}
+    // layout rule: phases left to right in form order, ground parks in space 5, blanks between
+    const cs=Object.keys(byC).map(Number).sort((a,b)=>a-b); const gnd=cs.filter(c=>byC[c][0].color==='green'), ph=cs.filter(c=>byC[c][0].color!=='green');
+    ph.forEach((c,i)=>{if(i<SLOTS)reel.spaces[i]=byC[c];}); if(gnd.length) reel.spaces[SLOTS-1]=byC[gnd[0]];
+    if(cs.length) job.reels.push(reel);
+  }
+  return job;
+}
+function loadJob(j){Object.assign(JOB,j);JOB.reels.forEach(assignHeads);cur=0;['jName','jNum','jCust','jBy','jDate'].forEach(id=>$(id).value=JOB[{jName:'name',jNum:'number',jCust:'customer',jBy:'orderedBy',jDate:'dateNeeded'}[id]]||'');show();}
+const drop=$('drop'),fileIn=$('file'),status=$('status');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handle(f);}); fileIn.addEventListener('change',e=>{if(e.target.files[0])handle(e.target.files[0]);});
+async function handle(f){status.className='status';status.textContent='Reading '+f.name+' …';try{const j=await parsePDF(f);if(!j.reels.length){status.className='status err';status.textContent='No reels found. This reads the Smart Reel 3 or 4 compartment order form, one page per reel.';return;}status.textContent=`${j.reels.length} reels read. Every reel is on the stage; use the reel tabs under Build.`;loadJob(j);}catch(err){status.className='status err';status.textContent='Could not read that file: '+err.message;}}
+$('sample').onclick=()=>{const mk=(reel,feeder,len)=>newReel({reel,feeder,area:'Vault 9 & 10',voltage:'480V',instructions:'Install pulling heads on all runs',spaces:[
+  [{color:'brown',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[{color:'orange',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[{color:'yellow',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[],[{color:'green',size:'6',mat:'Cu',insul:'THHN/THWN-2',length:len,head:true}]]});
+  loadJob({name:'RNO NAP 4',number:'2525101',customer:'Morrow Meadows',orderedBy:'Bob Mott',dateNeeded:'8/14/2026',reels:[mk('1734','1927',165),mk('1735','1963',165),mk('1736','2034',260)]});status.textContent='Sample loaded.';};
+
+/* ---------- go ---------- */
+JOB.reels.push(newReel({reel:'1001'}));
+resize(); show(); setCam(); frame();
+</script>
+</body>
+</html>
