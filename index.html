@@ -111,7 +111,10 @@ button.b.sm{padding:5px 10px;font-size:12px}
   .pg tr.cuthead td .p{color:#ff8a8f}
   .pg .stepn{display:inline-block;min-width:22px;padding:2px 6px;border-radius:999px;background:#E01B22;color:#fff;font-weight:700;text-align:center}
   .pg .seq td{page-break-inside:avoid}
-  .pg .wh svg{width:100%;height:auto;margin-top:.12in}
+  .pg .wh svg{width:100%;height:auto}
+  .pg .whhead{display:grid;grid-template-columns:1fr 2.2in;gap:.3in;align-items:start;margin-bottom:.1in}.pg .whhead img{width:100%}
+  .pg .stepblk{display:grid;grid-template-columns:3.6in 1fr;gap:.3in;align-items:start;padding:.12in 0;border-top:1px solid #000;page-break-inside:avoid;break-inside:avoid}
+  .pg .cuthd{font-weight:700;font-size:12px;margin-bottom:4px}.pg .cuthd .p{color:#E01B22}
 }
 </style>
 </head>
@@ -119,7 +122,7 @@ button.b.sm{padding:5px 10px;font-size:12px}
 <div id="app">
   <header>
     <div class="mark">M WIRE<i>.</i> <span class="micro" style="margin-left:10px">ARK module · reel configurator</span></div>
-    <div class="tabs" id="tabs"><button class="on" data-t="build">Build</button><button data-t="sheet">From sheet</button><button data-t="order">Order</button></div>
+    <div class="tabs" id="tabs"><button class="on" data-t="sheet">From sheet</button><button data-t="build">Build</button><button data-t="order">Order</button></div>
   </header>
 
   <div id="stage">
@@ -135,12 +138,13 @@ button.b.sm{padding:5px 10px;font-size:12px}
       <div id="sectSvg"></div>
       <div class="status">Cut through the axle, seen from the side. Space widths are opened up so the cuts can be read; heights show how full each space really is. Pull 1 is on the outside and comes off first. Click a cut to inspect it.</div>
     </div>
+    <div id="dropAll" style="display:none;position:absolute;inset:16px;border:2px dashed var(--red);border-radius:14px;background:rgba(251,249,245,.82);z-index:8;align-items:center;justify-content:center;pointer-events:none;flex-direction:column"><div style="font-size:44px;font-weight:700;letter-spacing:-.03em">Drop the order form<i style="color:var(--red);font-style:normal">.</i></div><div class="micro" style="margin-top:6px">Smart Reel order form · PDF · one page per reel</div></div>
     <div class="hud" id="hud"></div>
     <div class="card" id="card" style="display:none"></div>
   </div>
 
   <aside>
-    <div id="pane-build">
+    <div id="pane-build" style="display:none">
       <section class="p">
         <h3>Reels on this order</h3>
         <div class="reels" id="reelTabs"></div>
@@ -192,7 +196,7 @@ button.b.sm{padding:5px 10px;font-size:12px}
       </section>
     </div>
 
-    <div id="pane-sheet" style="display:none">
+    <div id="pane-sheet">
       <section class="p">
         <h3>Build from the customer's sheet</h3>
         <label class="drop" id="drop"><input type="file" id="file" accept="application/pdf"><b>Drop the Smart Reel order form</b><span>PDF, one page per reel. Or click to choose.</span></label>
@@ -671,13 +675,13 @@ function sectionSVG(r,opt={}){
   // the wire
   const leaders=[];let pid=0;const uid='g'+Math.max(0,ri)+Math.random().toString(36).slice(2,7);
   RR.forEach((st,i)=>{const x=colX(i)+(wood?14:0),cw=colW-(wood?28:0);
-    st.forEach((o,k)=>{const run=r.spaces[i][k],colors=(wood&&run.par)?run.par:[run.color],y1=py(o.r1),y0=py(o.r0),h=y0-y1;const on=sel&&sel.space===i&&sel.stack===k;
+    st.forEach((o,k)=>{if(opt.upto!==undefined&&k>opt.upto)return;const run=r.spaces[i][k],colors=(wood&&run.par)?run.par:[run.color],y1=py(o.r1),y0=py(o.r0),h=y0-y1;const focus=opt.upto!==undefined&&k===opt.upto;const on=(sel&&sel.space===i&&sel.stack===k)||focus;const dim=opt.upto!==undefined&&k<opt.upto;
       const id=uid+'p'+(pid++);const sw=Math.max(6,o.od*11);
       if(colors.length>1){defs+=`<pattern id="${id}" width="${sw*colors.length}" height="10" patternUnits="userSpaceOnUse">${colors.map((c,j)=>`<rect x="${j*sw}" y="0" width="${sw}" height="10" fill="${COLORS[c]}"/>`).join('')}</pattern>`;}
       const fillv=colors.length>1?`url(#${id})`:COLORS[colors[0]];
       const step=stepOf(ri,k);const tx=lum(COLORS[colors[0]])>.62?'#141414':'#fff';
       defs+=`<clipPath id="c${id}"><rect x="${x}" y="${y1}" width="${cw}" height="${h}"/></clipPath>`;
-      g+=`<g class="band" data-s="${i}" data-k="${k}"><rect class="bandfill" x="${x}" y="${y1}" width="${cw}" height="${h}" fill="${fillv}"/><g clip-path="url(#c${id})">`;
+      g+=`<g class="band" data-s="${i}" data-k="${k}"${dim?' opacity=".32"':''}><rect class="bandfill" x="${x}" y="${y1}" width="${cw}" height="${h}" fill="${fillv}"/><g clip-path="url(#c${id})">`;
       // turn lines
       const ts=Math.max(3,o.od*11*.87);for(let yy=y0-ts;yy>y1+1;yy-=ts)g+=`<line x1="${x}" x2="${x+cw}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>`;
       if(k>0)g+=`<rect x="${x}" y="${y0-2}" width="${cw}" height="3" fill="#c9a36b"/><rect x="${x}" y="${y0-3}" width="${cw}" height="1" fill="#6b4a22"/>`;
@@ -688,7 +692,7 @@ function sectionSVG(r,opt={}){
       const pull=st.length-k;
       if(opt.compact){ // warehouse: big step number, cut/pull under it
         if(h>=26)g+=`<text x="${x+cw/2}" y="${y1+h/2+6}" text-anchor="middle" font-size="18" font-weight="700" fill="${tx}">${step}</text>`;
-        else leaders.push({x:x+cw/2,y:y1,text:[`STEP ${step}`],col:i});
+        else if(!dim) leaders.push({x:x+cw/2,y:y1,text:[`STEP ${step}`],col:i});
       }else{
         const l1=`CUT ${k+1} · PULL ${pull}`,l2=`${run.length.toLocaleString()} ft · ${run.par?'Paralleled '+run.par.map(cap).join('/'):cap(run.color)} ${run.size} ${run.mat||''}`,l3=run.dest||'';
         if(h>=44){g+=`<text x="${x+10}" y="${y1+18}" font-size="10" letter-spacing="1.6" font-weight="700" fill="${tx}">${esc(l1)}</text><text x="${x+10}" y="${y1+33}" font-size="11" fill="${tx}">${esc(l2)}</text>${l3&&h>=58?`<text x="${x+10}" y="${y1+48}" font-size="10" fill="${tx}" opacity=".85">${esc(l3)}</text>`:''}`;}
@@ -760,11 +764,16 @@ function buildSheet(){
       rows+=`<tr><td>${r.asset==='mroll'?'Reel':'Space '+(i+1)}</td><td>Cut ${kk+1} · Pull ${st.length-kk}</td><td>${cols.map(c=>`<span class="sw" style="background:${COLORS[c]}"></span>`).join('')}${run.par?'Paralleled '+run.par.map(cap).join(', '):cap(run.color)}</td><td>${esc(run.size)} ${esc(run.mat)} ${esc(run.insul)}${run.gndSize?' · gnd '+esc(run.gndSize)+' Cu':''}</td><td>${run.length.toLocaleString()} ft</td><td>${run.head?run.headLen+' in':'none'}</td><td>${esc(run.dest||'')}</td><td style="width:.3in;border:1px solid #000"></td></tr>`;});
       if(kk<n-1) rows+=`<tr><td colspan="8" style="background:#f1ece3;font-size:9px;letter-spacing:.1em;text-transform:uppercase">Paper separator over cut ${kk+1} on every space, then step ${st0.n+1}</td></tr>`;}
     const mine=S.filter(x=>x.ri===ri);
-    html+=`<div class="pg" style="grid-template-columns:3.4in 1fr"><div><img src="${img}"><div class="wh">${sectionSVG(r,{compact:true})}</div><div class="micro" style="margin-top:4px">Section: the number on each cut is its step</div></div><div>
-      <div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · reel ${ri+1} of ${JOB.reels.length}${mine.length?' · steps '+mine[0].n+(mine.length>1?' to '+mine[mine.length-1].n:''):''}</div><h2>Reel ${ri+1} · #${esc(r.reel)}<i>.</i></h2>
-      <div class="kv"><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>On reel</span><b>${reelRuns(r).reduce((q,w)=>q+w.length,0).toLocaleString()} ft</b>${r.instructions?`<span>Note</span><b>${esc(r.instructions)}</b>`:''}</div>
-      <table><tr><th>Where</th><th>Cut · pull</th><th>Color</th><th>Wire</th><th>Length</th><th>Head</th><th>Tag · goes to</th><th>Done</th></tr>${rows}</table>
-      <p style="font-size:10px;color:#514c45;margin-top:8px">Wind in step order. Install the pulling head on the outer end of every cut before the next cut goes on. Mark the reel ${esc(r.reel)}${r.feeder?' · feeder '+esc(r.feeder):''}.</p></div></div><div style="break-after:page;page-break-after:always"></div>`;});
+    // one block per step: the section shows the reel as it stands after that cut (earlier cuts dimmed, this cut in full color)
+    const blocks=mine.map(st0=>{const kk=st0.k;let rws='';r.spaces.forEach((st,i)=>{const run=st[kk];if(!run)return;const cols=run.par||[run.color];
+        rws+=`<tr><td>${r.asset==='mroll'?'Reel':'Space '+(i+1)}</td><td>${cols.map(c=>`<span class="sw" style="background:${COLORS[c]}"></span>`).join('')}${run.par?'Paralleled '+run.par.map(cap).join(', '):cap(run.color)}</td><td>${esc(run.size)} ${esc(run.mat)} ${esc(run.insul)}${run.gndSize?' · gnd '+esc(run.gndSize)+' Cu':''}</td><td>${run.length.toLocaleString()} ft</td><td>${run.head?run.headLen+' in':'none'}</td><td>${esc(run.dest||'')}</td><td style="width:.3in;border:1px solid #000"></td></tr>`;});
+      return `<div class="stepblk"><div class="wh">${sectionSVG(r,{compact:true,upto:kk})}</div><div>
+        <div class="cuthd"><span class="stepn">${st0.n}</span> CUT ${kk+1}${st0.plain?' · PLAIN REEL':' OF '+n+' · <span class="p">PULL '+st0.pull+'</span>'}${st0.dest?' &nbsp;·&nbsp; '+esc(st0.dest.toUpperCase()):''}${kk>0?' <span style="font-weight:400;opacity:.8">· winds on top of cut '+kk+'</span>':''}</div>
+        <table><tr><th>Where</th><th>Color</th><th>Wire</th><th>Length</th><th>Head</th><th>Tag · goes to</th><th>Done</th></tr>${rws}</table>
+        <div class="micro" style="margin-top:4px">${kk<n-1?'Pulling heads on the outer ends, then paper over cut '+(kk+1)+' on every space, then step '+(st0.n+1)+'.':'Pulling heads on the outer ends. Last cut on this reel: mark it '+esc(r.reel)+(r.feeder?' · feeder '+esc(r.feeder):'')+'.'}</div></div></div>`;}).join('');
+    html+=`<div class="pg" style="display:block"><div class="whhead"><div><div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · reel ${ri+1} of ${JOB.reels.length}${mine.length?' · steps '+mine[0].n+(mine.length>1?' to '+mine[mine.length-1].n:''):''}</div><h2>Reel ${ri+1} · #${esc(r.reel)}<i>.</i></h2>
+      <div class="kv"><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>On reel</span><b>${reelRuns(r).reduce((q,w)=>q+w.length,0).toLocaleString()} ft · ${n} cut${n>1?'s stacked':''}</b>${r.instructions?`<span>Note</span><b>${esc(r.instructions)}</b>`:''}</div></div><img src="${img}"></div>
+      ${blocks}</div><div style="break-after:page;page-break-after:always"></div>`;});
   const acc=ACC.filter(a=>JOB.acc[a.id]);
   if(acc.length) html+=`<div class="pg" style="display:block"><h2>Ship with the reels<i>.</i></h2><table><tr><th>Qty</th><th>Item</th><th>Note</th><th>Done</th></tr>${acc.map(a=>`<tr><td>${JOB.acc[a.id]}</td><td>${esc(a.name)}</td><td>${esc(a.note)}</td><td style="width:.3in;border:1px solid #000"></td></tr>`).join('')}</table></div>`;
   $('printdoc').innerHTML=html; cur=keep; buildReel(JOB.reels[cur]); [theta,phi,dist]=k; sel=keepSel;
@@ -806,7 +815,12 @@ function loadJob(j){Object.assign(JOB,j);JOB.reels.forEach(assignHeads);cur=0;['
 const drop=$('drop'),fileIn=$('file'),status=$('status');
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
-drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handle(f);}); fileIn.addEventListener('change',e=>{if(e.target.files[0])handle(e.target.files[0]);});
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handle(f);});
+// drop anywhere: the whole stage takes the order form too
+let dragN=0;document.addEventListener('dragenter',e=>{if(e.target.closest&&e.target.closest('#drop'))return;dragN++;$('dropAll').style.display='flex';});
+document.addEventListener('dragleave',e=>{if(e.target.closest&&e.target.closest('#drop'))return;dragN=Math.max(0,dragN-1);if(!dragN)$('dropAll').style.display='none';});
+document.addEventListener('dragover',e=>{e.preventDefault();});
+document.addEventListener('drop',e=>{dragN=0;$('dropAll').style.display='none';if(e.target.closest&&e.target.closest('#drop'))return;e.preventDefault();const f=e.dataTransfer.files[0];if(f&&/pdf$/i.test(f.name)){$('tabs').querySelector('[data-t=sheet]').click();handle(f);}}); fileIn.addEventListener('change',e=>{if(e.target.files[0])handle(e.target.files[0]);});
 async function handle(f){status.className='status';status.textContent='Reading '+f.name+' …';try{const j=await parsePDF(f);if(!j.reels.length){status.className='status err';status.textContent='No reels found. This reads the Smart Reel 3 or 4 compartment order form, one page per reel.';return;}status.textContent=`${j.reels.length} reels read. Every reel is on the stage; use the reel tabs under Build.`;loadJob(j);}catch(err){status.className='status err';status.textContent='Could not read that file: '+err.message;}}
 $('sample').onclick=()=>{const mk=(reel,feeder,len)=>newReel({reel,feeder,area:'Vault 9 & 10',voltage:'480V',instructions:'Install pulling heads on all runs',spaces:[
   [{color:'brown',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[{color:'orange',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[{color:'yellow',size:'3/0',mat:'Al',insul:'THHN/THWN-2',length:len,head:true}],[],[{color:'green',size:'6',mat:'Cu',insul:'THHN/THWN-2',length:len,head:true}]]});
