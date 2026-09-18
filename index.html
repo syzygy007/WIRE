@@ -131,6 +131,16 @@ button.b.sm{padding:5px 10px;font-size:12px}
 .pg .cuthd{font-weight:700;font-size:12px;margin-bottom:4px}.pg .cuthd .p{color:#E01B22}
 #pdfStage{position:fixed;left:-12000px;top:0;width:10.1in;background:#fff;color:#141414;font-size:11px;line-height:1.35;z-index:-1}
 #pdfStage .pg{background:#fff;padding-bottom:2px}
+.ll{display:grid;grid-template-columns:1fr 1.45in;gap:.08in;width:4in;height:2in;box-sizing:border-box;padding:.12in .14in;background:#fff;color:#000;font-size:9px;line-height:1.25;overflow:hidden}
+.ll .lmicro{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:#000;white-space:nowrap;overflow:hidden}
+.ll .lldest{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:.95;margin:3px 0 3px;text-transform:uppercase;overflow:hidden;max-height:.5in}.ll .lldest i{font-style:normal}
+.ll .llpull{font-size:9.5px;margin-bottom:3px}.ll .llpull b{font-size:11px}
+.ll .llwires{display:flex;flex-wrap:wrap;gap:1px 8px;font-size:8.5px}
+.ll .llfoot{margin-top:auto;padding-top:3px;border-top:1px solid #000;font-size:7px;letter-spacing:.04em;text-transform:uppercase;line-height:1.25;overflow:hidden}
+.ll .llbody{display:flex;flex-direction:column;min-width:0}
+.ll .llqr{text-align:center}.ll .llqr img{width:1.45in;height:1.45in;display:block}.ll .llqr span{font-size:7px;letter-spacing:.1em;text-transform:uppercase}
+.ht{display:grid;grid-template-columns:.62in 1fr;gap:.05in;width:2in;height:.75in;box-sizing:border-box;padding:.06in .07in;background:#fff;color:#000;font-size:7.5px;line-height:1.2;overflow:hidden;align-items:center}
+.ht img{width:.62in;height:.62in;display:block}.ht b{font-size:10px}.ht span{font-weight:700;letter-spacing:.04em}
 .pg.cust .top.hasqr{grid-template-columns:2.9in 1fr 1.9in}.pg .whhead.hasqr{grid-template-columns:1fr 1.7in 2.2in}
 .pg .qrbox{text-align:center}.pg .qrbox img{width:100%;max-height:none;display:block}.pg .qrbox .micro{font-size:7.5px;margin-top:2px}.pg .qrbox b{display:block;font-size:8px;letter-spacing:.04em;word-break:break-all}
 #pdfBusy{position:fixed;inset:0;z-index:99;background:rgba(251,249,245,.94);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center}
@@ -253,6 +263,11 @@ button.b.sm{padding:5px 10px;font-size:12px}
         <div class="btns"><button class="b primary" id="mintBtn">Make the labels</button><button class="b" id="printLbl" disabled>Labels PDF</button><select id="lblSize" style="width:auto"><option value="4x6">4 x 6 in</option><option value="4x4">4 x 4 in</option></select></div>
         <div class="status" id="lblStatus"></div>
         <div id="labels"></div>
+      </section>
+      <section class="p">
+        <h3>Layer labels and head tags</h3>
+        <div class="status" style="margin:0 0 8px">One layer label per cut across the reel, printed in winding order, goes on the shrink wrap over that cut (4 x 2, PD45 or ZQ630). One head tag per pulling head (2 x 0.75, ZD421). Each scan opens the reel on that exact pull.</div>
+        <div class="btns"><button class="b primary" id="layerBtn">Layer labels PDF</button><button class="b" id="headBtn">Head tags PDF</button></div>
       </section>
       <section class="p">
         <h3>P21 order lines</h3>
@@ -812,9 +827,9 @@ async function makePDF(html,file,opt){opt=opt||{};
         if(!opt.fit&&end-y>pageH){const lim=y+pageH;const ok=cand.filter(c=>c<=lim&&c>y+pageH*.25);end=ok.length?ok[ok.length-1]:lim;}
         const sl=document.createElement('canvas');sl.width=cv.width;sl.height=end-y;const g=sl.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,sl.width,sl.height);g.drawImage(cv,0,y,cv.width,end-y,0,0,cv.width,end-y);
         if(!first)doc.addPage([W,H],W>H?'landscape':'portrait');first=false;pageNo++;$('pdfBusyMsg').textContent='page '+pageNo;
-        let w=W-2*M,h=(end-y)/PX;if(opt.fit&&h>H-2*M){const f=(H-2*M)/h;w*=f;h*=f;}
+        let w=W-2*M,h=(end-y)/PX,f=1;if(opt.fit&&h>H-2*M){f=(H-2*M)/h;w*=f;h*=f;}
         doc.addImage(sl.toDataURL('image/jpeg',.93),'JPEG',M+(W-2*M-w)/2,M,w,h,undefined,'FAST');
-        if(!opt.fit)qrs.forEach((q,qi)=>{if(q.t>=y&&q.bt<=end)doc.addImage(q.src,'PNG',M+q.x,M+(q.t-y)/PX,q.w,q.h,'qr'+pageNo+'_'+qi,'FAST');});
+        qrs.forEach((q,qi)=>{if(q.t>=y&&q.bt<=end)doc.addImage(q.src,'PNG',M+(W-2*M-w)/2+q.x*f,M+(q.t-y)/PX*f,q.w*f,q.h*f,'qr'+pageNo+'_'+qi,'FAST');});
         y=end;await new Promise(r=>setTimeout(r,0));}
     }
     doc.setProperties({title:file.replace(/\.pdf$/,''),creator:'WIRESTACK'});
@@ -858,7 +873,7 @@ async function buildSheet(){
       r.spaces.forEach((st,i)=>{const run=st[kk];if(!run)return;
       const cols=run.par||[run.color];
       rows+=`<tr><td>${r.asset==='mroll'?'Reel':'Space '+(i+1)}</td><td>Cut ${kk+1} · Pull ${st.length-kk}</td><td>${cols.map(c=>`<span class="sw" style="background:${COLORS[c]}"></span>`).join('')}${run.par?'Paralleled '+run.par.map(cap).join(', '):cap(run.color)}</td><td>${esc(run.size)} ${esc(run.mat)} ${esc(run.insul)}${run.gndSize?' · gnd '+esc(run.gndSize)+' Cu':''}</td><td>${run.length.toLocaleString()} ft</td><td>${run.head?run.headLen+' in':'none'}</td><td>${esc(run.dest||'')}</td><td style="width:.3in;border:1px solid #000"></td></tr>`;});
-      if(kk<n-1) rows+=`<tr><td colspan="8" style="background:#f1ece3;font-size:9px;letter-spacing:.1em;text-transform:uppercase">Paper separator over cut ${kk+1} on every space, then step ${st0.n+1}</td></tr>`;}
+      if(kk<n-1) rows+=`<tr><td colspan="8" style="background:#f1ece3;font-size:9px;letter-spacing:.1em;text-transform:uppercase">Shrink wrap and layer label ${st0.n} over cut ${kk+1} on every space, then step ${st0.n+1}</td></tr>`;}
     const mine=S.filter(x=>x.ri===ri);
     // one block per step: the section shows the reel as it stands after that cut (earlier cuts dimmed, this cut in full color)
     const blocks=mine.map(st0=>{const kk=st0.k;let rws='';r.spaces.forEach((st,i)=>{const run=st[kk];if(!run)return;const cols=run.par||[run.color];
@@ -866,7 +881,7 @@ async function buildSheet(){
       return `<div class="stepblk"><div class="wh">${sectionSVG(r,{compact:true,upto:kk})}</div><div>
         <div class="cuthd"><span class="stepn">${st0.n}</span> CUT ${kk+1}${st0.plain?' · PLAIN REEL':' OF '+n+' · <span class="p">PULL '+st0.pull+'</span>'}${st0.dest?' &nbsp;·&nbsp; '+esc(st0.dest.toUpperCase()):''}${kk>0?' <span style="font-weight:400;opacity:.8">· winds on top of cut '+kk+'</span>':''}</div>
         <table><tr><th>Where</th><th>Color</th><th>Wire</th><th>Length</th><th>Head</th><th>Tag · goes to</th><th>Done</th></tr>${rws}</table>
-        <div class="micro" style="margin-top:4px">${kk<n-1?'Pulling heads on the outer ends, then paper over cut '+(kk+1)+' on every space, then step '+(st0.n+1)+'.':'Pulling heads on the outer ends. Last cut on this reel: mark it '+esc(r.reel)+(r.feeder?' · feeder '+esc(r.feeder):'')+'.'}</div></div></div>`;}).join('');
+        <div class="micro" style="margin-top:4px">${kk<n-1?'Pulling heads on the outer ends, head tags on, shrink wrap over cut '+(kk+1)+' on every space, layer label '+st0.n+' on the wrap, then step '+(st0.n+1)+'.':'Pulling heads on the outer ends, head tags on, shrink wrap, layer label '+st0.n+' on the wrap. Last cut on this reel: mark it '+esc(r.reel)+(r.feeder?' · feeder '+esc(r.feeder):'')+'.'}</div></div></div>`;}).join('');
     html+=`<div class="pg" style="display:block"><div class="whhead${qrb?' hasqr':''}"><div><div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · reel ${ri+1} of ${JOB.reels.length}${mine.length?' · steps '+mine[0].n+(mine.length>1?' to '+mine[mine.length-1].n:''):''}</div><h2>Reel ${ri+1} · #${esc(r.reel)}<i>.</i></h2>
       <div class="kv"><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>On reel</span><b>${reelRuns(r).reduce((q,w)=>q+w.length,0).toLocaleString()} ft · ${n} cut${n>1?'s stacked':''}</b>${r.uid?`<span>UID</span><b>${esc(r.uid)}</b>`:''}${r.instructions?`<span>Note</span><b>${esc(r.instructions)}</b>`:''}</div></div>${qrb}<img src="${img}"></div>
       ${blocks}</div><div style="break-after:page;page-break-after:always"></div>`;}
@@ -949,17 +964,30 @@ async function signPayload(uid,payload){if(!UID.mint)return '-';try{const res=aw
 async function verifyPayload(payload,sig){if(sig==='-')return 'unsigned';if(!UID.publicKey)return 'signed, not checked here';try{const key=await crypto.subtle.importKey('raw',b64u.dec(UID.publicKey),{name:'Ed25519'},false,['verify']);const ok=await crypto.subtle.verify({name:'Ed25519'},key,b64u.dec(sig),new TextEncoder().encode(payload));return ok?'signature verified':'SIGNATURE FAILED';}catch(e){return 'signature not checked ('+e.message+')';}}
 // label = base#u/UID/1.<manifest>.<sig>   (everything lives in the hash so a static host serves it)
 async function mintLabel(r){if(!r.uid)r.uid=newUID('RL');const man=await encodeManifest(manifestOf(r));const payload=r.uid+'#1.'+man;const sig=await signPayload(r.uid,payload);r.label=UID.base+'#u/'+r.uid+'/1.'+man+'.'+sig;r.labelSig=sig;return r.label;}
-function parseLabelHash(h){const m=/^#u\/([A-Z]{2}-[0-9A-HJKMNP-TV-Z]{26})\/1\.([dj][A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+|-)$/.exec(h||'');return m?{uid:m[1],man:m[2],sig:m[3]}:null;}
+function parseLabelHash(h){const m=/^#u\/([A-Z]{2}-[0-9A-HJKMNP-TV-Z]{26})\/1\.([dj][A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+|-)(?:\/c(\d+)(?:s(\d+))?)?$/.exec(h||'');if(m)return {uid:m[1],man:m[2],sig:m[3],cut:m[4]==null?null:+m[4],space:m[5]==null?null:+m[5]};
+  const t=/^#u\/([A-Z]{2}-[0-9A-HJKMNP-TV-Z]{26})\/c(\d+)(?:s(\d+))?$/.exec(h||'');return t?{uid:t[1],short:true,cut:+t[2],space:t[3]==null?null:+t[3]}:null;}
 async function openFromHash(){const p=parseLabelHash(location.hash);if(!p)return false;
+  if(p.short){const ri=JOB.reels.findIndex(x=>x.uid===p.uid);const bar=$('scanBar');bar.style.display='block';history.replaceState(null,'',location.pathname);
+    if(ri<0){bar.className='scanbar bad';bar.innerHTML=`<b>Head tag scanned.</b> ${esc(p.uid)} · pull tag only. Scan the reel label or a layer label to load this reel.`;return false;}
+    const r=JOB.reels[ri];cur=ri;buildReel(r);$('tabs').querySelector('[data-t=build]').click();const k=p.cut,m=stackCount(r),sp=p.space!=null?p.space:r.spaces.findIndex(st=>st[k]);
+    if(sp>=0&&r.spaces[sp][k]){select(sp,k);const run=r.spaces[sp][k];bar.className='scanbar';bar.innerHTML=`<b>Head tag · Pull ${m-k} of ${m}${run.dest?' · '+esc(run.dest):''} · space ${sp+1} ${esc(cap(run.color))} ${esc(run.size)}.</b> ${esc(p.uid)}`;}
+    return true;}
   try{const m=await decodeManifest(p.man);const r=reelFromManifest(m);r.uid=p.uid;r.labelSig=p.sig;r.label=location.href;
     const chk=await verifyPayload(p.uid+'#1.'+p.man,p.sig);
     loadJob({name:m.job||'',number:m.num||'',customer:m.cust||'',orderedBy:'',dateNeeded:m.need||'',reels:[r]});
     $('tabs').querySelector('[data-t=build]').click();
-    const bar=$('scanBar');bar.style.display='block';bar.innerHTML=`<b>Opened from the reel label.</b> ${esc(p.uid)} · ${esc(chk)}`;bar.className='scanbar'+(/FAILED/.test(chk)?' bad':'');
+    let what='Opened from the reel label.';
+    if(p.cut!=null){const k=p.cut,m=stackCount(r),sp=p.space!=null?p.space:r.spaces.findIndex(st=>st[k]);if(sp>=0&&r.spaces[sp][k]){select(sp,k);const run=r.spaces[sp][k];what=`${p.space!=null?'Head tag':'Layer label'} · Pull ${m-k} of ${m}${run.dest?' · '+esc(run.dest):''}${p.space!=null?' · space '+(sp+1)+' '+esc(cap(run.color))+' '+esc(run.size):''}.`;}}
+    const bar=$('scanBar');bar.style.display='block';bar.innerHTML=`<b>${what}</b> ${esc(p.uid)} · ${esc(chk)}`;bar.className='scanbar'+(/FAILED/.test(chk)?' bad':'');
     history.replaceState(null,'',location.pathname);return true;}
   catch(e){const bar=$('scanBar');bar.style.display='block';bar.className='scanbar bad';bar.textContent='That label could not be read: '+e.message;return false;}}
 window.addEventListener('hashchange',openFromHash);
 
+/* flat QR for the thermal printers (PD45 / ZD421 / ZQ630 are 203 dpi monochrome): black on white, whole-pixel modules, 4 module quiet zone */
+function qrFlat(url,px=600){const q=qrcode(0,'M');q.addData(url);q.make();const n=q.getModuleCount(),W=n+8,m=Math.max(2,Math.floor(px/W)),S=W*m;
+  const c=document.createElement('canvas');c.width=S;c.height=S;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,S,S);g.fillStyle='#000';
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))g.fillRect((x+4)*m,(y+4)*m,m,m);
+  return {img:c.toDataURL('image/png'),n};}
 /* the QR as an object: dark modules are blocks in the reel's own finish on a white card, seen 8 deg off vertical, the reel in a round window in the middle */
 function qrModules(url){let ec='H',q;for(const lv of ['H','Q','M']){q=qrcode(0,lv);q.addData(url);q.make();ec=lv;const n=q.getModuleCount();if((lv==='H'&&n<=73)||(lv==='Q'&&n<=85)||lv==='M')break;}
   const n=q.getModuleCount(),win=Math.round(n*(ec==='H'?.15:ec==='Q'?.13:.10)),c=(n-1)/2,lo=c-win/2,hi=c+win/2,dark=[];
@@ -991,6 +1019,27 @@ function labelHTML(r,i,qr){const runs=reelRuns(r);const stacked=stackCount(r)>1;
   return `<div class="lbl"><div class="lh"><div><div class="lmicro">${esc(JOB.name)}${JOB.number?' · job '+esc(JOB.number):''}${JOB.customer?' · '+esc(JOB.customer):''}</div><div class="lreel">${esc(r.reel||'?')}<i>.</i></div><div class="lmeta">${r.feeder?'Feeder '+esc(r.feeder):''}${r.area?' · '+esc(r.area):''}${r.voltage?' · '+esc(r.voltage):''}</div></div><div class="lasset">${r.asset==='mroll'?'REEL MATE':r.asset==='aframe'?'A-FRAME':'M REEL'}<br><span>${runs.reduce((a,b)=>a+b.length,0).toLocaleString()} ft${stacked?' · '+stackCount(r)+' pulls':''}</span></div></div>
     <img class="lqr" src="${qr.img}"><div class="luid">${esc(r.uid)}<span>${r.labelSig&&r.labelSig!=='-'?'signed':'unsigned'} · ${qr.n} modules · ec ${qr.ec}</span></div>
     <table class="lcuts">${rows}</table><div class="lfoot"><span>Scan to open this reel</span><span>WIRESTACK</span></div></div>`;}
+function layerLabelHTML(s){const r=s.r,url=r.label+'/c'+s.k,q=qrFlat(url,400);const m=s.of;
+  const next=s.k>0?buildSteps().find(x=>x.ri===s.ri&&x.k===s.k-1):null;
+  const dst=s.dest||('Pull '+s.pull),fs=dst.length>26?15:dst.length>18?19:dst.length>13?23:26;
+  const wires=s.cuts.map(c=>`<span>${r.asset==='mroll'?'':'S'+(c.space+1)+' '}${esc(c.run.par?c.run.par.map(cap).join('/'):cap(c.run.color))} ${esc(c.run.size)} ${esc(c.run.mat||'')} · ${c.run.length.toLocaleString()} ft</span>`).join('');
+  return `<div class="ll"><div class="llbody"><div class="lmicro">${esc(JOB.name)}${JOB.number?' · order '+esc(JOB.number):''}${JOB.customer?' · '+esc(JOB.customer):''}</div>
+    <div class="lldest" style="font-size:${fs}px">${esc(dst)}<i>.</i></div>
+    <div class="llpull"><b>PULL ${s.pull} OF ${m}</b> · reel ${esc(r.reel)}${r.feeder?' · feeder '+esc(r.feeder):''}${r.area?' · '+esc(r.area):''}</div>
+    <div class="llwires">${wires}</div>
+    <div class="llfoot">${next?`Under this wrap: pull ${next.pull} · ${esc(next.dest||'')} · ${next.ft.toLocaleString()} ft`:'Last pull on this reel · drum under this wrap'} · step ${s.n}</div></div>
+    <div class="llqr"><img class="qrnative" src="${q.img}"><span>${esc(r.uid.slice(-8))} · scan</span></div></div>`;}
+function headTagHTML(s,c){const r=s.r,url=UID.base+'#u/'+r.uid+'/c'+s.k+'s'+c.space,q=qrFlat(url,300);
+  return `<div class="ht"><img class="qrnative" src="${q.img}"><div><b>PULL ${s.pull}</b> of ${s.of} · ${r.asset==='mroll'?'reel':'S'+(c.space+1)} ${esc(cap(c.run.par?c.run.par[0]:c.run.color))} ${esc(c.run.size)}<br>${c.run.length.toLocaleString()} ft · reel ${esc(r.reel)}<br><span>${esc((s.dest||'').toUpperCase())}</span></div></div>`;}
+async function makeLayerLabels(kind){const keep=cur,keepSel=sel;sel=null;
+  for(let i=0;i<JOB.reels.length;i++){cur=i;await mintLabel(JOB.reels[i]);}
+  cur=keep;buildReel(JOB.reels[cur]);sel=keepSel;renderLines();
+  const S=buildSteps();let html='';
+  if(kind==='layer'){S.forEach(s=>html+=layerLabelHTML(s));
+    await makePDF(html,pdfName('layer-labels-4x2'),{w:4,h:2,m:0,unit:'.ll',fit:true,css:'#pdfStage .ll{width:4in;height:2in}'});}
+  else{S.forEach(s=>s.cuts.forEach(c=>html+=headTagHTML(s,c)));
+    await makePDF(html,pdfName('head-tags-2x075'),{w:2,h:.75,m:0,unit:'.ht',fit:true,css:'#pdfStage .ht{width:2in;height:.75in}'});}}
+$('layerBtn').onclick=()=>makeLayerLabels('layer');$('headBtn').onclick=()=>makeLayerLabels('head');
 async function makeLabels(){const out=$('labels');out.innerHTML='<div class="status">Minting …</div>';const keep=cur,keepSel=sel;sel=null;let html='';
   for(let i=0;i<JOB.reels.length;i++){cur=i;const r=JOB.reels[i];await mintLabel(r);const qr=qr3d(r,r.label);html+=labelHTML(r,i,qr);}
   cur=keep;buildReel(JOB.reels[cur]);sel=keepSel;out.innerHTML=html;$('printLbl').disabled=false;renderLines();
