@@ -131,17 +131,23 @@ button.b.sm{padding:5px 10px;font-size:12px}
 .pg .cuthd{font-weight:700;font-size:12px;margin-bottom:4px}.pg .cuthd .p{color:#E01B22}
 #pdfStage{position:fixed;left:-12000px;top:0;width:10.1in;background:#fff;color:#141414;font-size:11px;line-height:1.35;z-index:-1}
 #pdfStage .pg{background:#fff;padding-bottom:2px}
-.ll{display:grid;grid-template-columns:1fr 1.45in;gap:.08in;width:4in;height:2in;box-sizing:border-box;padding:.12in .14in;background:#fff;color:#000;font-size:9px;line-height:1.25;overflow:hidden}
-.ll .lmicro{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:#000;white-space:nowrap;overflow:hidden}
-.ll .lldest{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:.95;margin:3px 0 3px;text-transform:uppercase;overflow:hidden;max-height:.5in}.ll .lldest i{font-style:normal}
-.ll .llpull{font-size:9.5px;margin-bottom:3px}.ll .llpull b{font-size:11px}
-.ll .llwires{display:flex;flex-wrap:wrap;gap:1px 8px;font-size:8.5px}
-.ll .llfoot{margin-top:auto;padding-top:3px;border-top:1px solid #000;font-size:7px;letter-spacing:.04em;text-transform:uppercase;line-height:1.25;overflow:hidden}
-.ll .llbody{display:flex;flex-direction:column;min-width:0}
-.ll .llqr{text-align:center}.ll .llqr img{width:1.45in;height:1.45in;display:block}.ll .llqr span{font-size:7px;letter-spacing:.1em;text-transform:uppercase}
-.ht{display:grid;grid-template-columns:.62in 1fr;gap:.05in;width:2in;height:.75in;box-sizing:border-box;padding:.06in .07in;background:#fff;color:#000;font-size:7.5px;line-height:1.2;overflow:hidden;align-items:center}
-.ht img{width:.62in;height:.62in;display:block}.ht b{font-size:10px}.ht span{font-weight:700;letter-spacing:.04em}
-.pg.cust .top.hasqr{grid-template-columns:2.9in 1fr 1.9in}.pg .whhead.hasqr{grid-template-columns:1fr 1.7in 2.2in}
+.lblwrap .lbl{width:4in;height:6in;padding:.22in .24in;border:0;border-radius:0;margin:0;box-shadow:none;font-family:'Space Grotesk',Helvetica,Arial,sans-serif}.lblwrap .lbl .lqr{width:2.9in}
+.ll{display:grid;grid-template-columns:1fr 1.3in;grid-template-rows:auto 1fr;gap:0 .1in;width:4in;height:2in;box-sizing:border-box;padding:0 .12in .1in .14in;background:#fff;color:#000;font-size:8.5px;line-height:1.25;overflow:hidden;font-family:'Space Grotesk',Helvetica,Arial,sans-serif}
+.ll .llband{grid-column:1/3;display:flex;justify-content:space-between;align-items:baseline;background:#000;color:#fff;margin:0 -.12in 0 -.14in;padding:.05in .14in .045in;font-size:8px;letter-spacing:.12em;text-transform:uppercase}.ll .llband b{font-size:14px;letter-spacing:-.01em}.ll .llband b i{font-style:normal;font-weight:400;font-size:9px;letter-spacing:.1em;margin-left:2px}
+.ll .lmicro{font-size:6.5px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;overflow:hidden;margin-top:.06in}
+.ll .lldest{font-weight:700;letter-spacing:-.03em;line-height:.95;margin:2px 0 4px;text-transform:uppercase;overflow:hidden;max-height:.5in}.ll .lldest i{font-style:normal}
+.ll .llt{border-collapse:collapse;font-size:8px;width:100%}.ll .llt td{padding:1px 6px 1px 0;border-bottom:.5px solid #000;white-space:nowrap}.ll .llt td:first-child{font-weight:700;width:.25in}.ll .llt td:last-child{text-align:right;padding-right:0;font-weight:700}
+.ll .llfoot{margin-top:auto;padding-top:3px;display:flex;justify-content:space-between;gap:6px;font-size:6.5px;letter-spacing:.06em;text-transform:uppercase;line-height:1.25}.ll .llfoot span:last-child{white-space:nowrap;font-weight:700}
+.ll .llbody{display:flex;flex-direction:column;min-width:0;min-height:0}
+.ll .llqr{display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding-top:.06in}.ll .llqr img{width:1.28in;height:1.28in;display:block}.ll .llqr svg{display:block}
+.ht{display:grid;grid-template-columns:.6in 1fr;gap:.05in;width:2in;height:.75in;box-sizing:border-box;padding:.05in .06in .05in .06in;background:#fff;color:#000;font-size:7px;line-height:1.2;overflow:hidden;align-items:center;font-family:'Space Grotesk',Helvetica,Arial,sans-serif}
+.ht img{width:.6in;height:.6in;display:block}.ht .htb{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ht .htband{background:#000;color:#fff;padding:2px 5px;font-size:7px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}.ht .htband b{font-size:10px;letter-spacing:0}
+.ht .htw{font-size:7.5px;white-space:nowrap;overflow:hidden}.ht .htd{font-weight:700;font-size:8px;letter-spacing:.02em;white-space:nowrap;overflow:hidden}.ht .htr{font-size:6.5px;letter-spacing:.08em;text-transform:uppercase}
+.lblwrap{position:relative;overflow:hidden}.lblwrap>*{position:absolute;left:0;top:0;transform-origin:0 0}
+.pg .prn{display:grid;grid-template-columns:repeat(3,1fr);gap:.2in;margin:.1in 0 .15in;padding:.1in 0;border-top:2px solid #000;border-bottom:1px solid #000}.pg .prn b{display:block;font-size:22px;letter-spacing:-.03em;line-height:1}.pg .prn span{display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase}.pg .prn i{display:block;font-style:normal;font-size:10px;margin-top:2px}
+.pg .steplbl{display:flex;gap:.12in;align-items:flex-start;margin-top:.08in;padding-top:.06in;border-top:1px dashed #999}.pg .steplbl .cap{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:#514c45;margin-top:3px}.pg .steplbl .tags{display:grid;grid-template-columns:1fr 1fr;gap:.04in}
+.pg.cust .top.hasqr{grid-template-columns:2.9in 1fr 1.9in}.pg .whhead.hasqr{grid-template-columns:1fr 1.5in 2.2in}
 .pg .qrbox{text-align:center}.pg .qrbox img{width:100%;max-height:none;display:block}.pg .qrbox .micro{font-size:7.5px;margin-top:2px}.pg .qrbox b{display:block;font-size:8px;letter-spacing:.04em;word-break:break-all}
 #pdfBusy{position:fixed;inset:0;z-index:99;background:rgba(251,249,245,.94);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center}
 #pdfBusy.on{display:flex}#pdfBusy b{font-size:44px;letter-spacing:-.03em;line-height:1}#pdfBusy b i{color:var(--red);font-style:normal}#pdfBusy span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
@@ -820,11 +826,11 @@ async function makePDF(html,file,opt){opt=opt||{};
     for(const pg of units){
       const top=pg.getBoundingClientRect().top;
       const qrs=[...pg.querySelectorAll('img.qrnative')].map(e=>{const b=e.getBoundingClientRect(),p=pg.getBoundingClientRect();return {src:e.src,x:(b.left-p.left)/96,t:(b.top-top)*SC,bt:(b.bottom-top)*SC,w:b.width/96,h:b.height/96};});
-      const cand=[...pg.querySelectorAll('tr,.stepblk,.whhead,.top,.sec,.kv,h2')].map(e=>Math.round((e.getBoundingClientRect().bottom-top)*SC)).sort((a,b)=>a-b);
+      const cand=[...pg.querySelectorAll('tr,.stepblk,.whhead,.top,.sec,.kv,h2')].map(e=>Math.round((e.getBoundingClientRect().bottom-top)*SC)).sort((a,b)=>a-b);const blk=[...pg.querySelectorAll('.stepblk,.whhead')].map(e=>Math.round((e.getBoundingClientRect().bottom-top)*SC)).sort((a,b)=>a-b);
       const cv=await html2canvas(pg,{scale:SC,backgroundColor:'#ffffff',logging:false,useCORS:true,ignoreElements:e=>e.id==='app'||e.id==='pdfBusy'||e.id==='printdoc'});
       const pageH=Math.floor((H-2*M)*PX);let y=0;
       while(y<cv.height-2){let end=cv.height;
-        if(!opt.fit&&end-y>pageH){const lim=y+pageH;const ok=cand.filter(c=>c<=lim&&c>y+pageH*.25);end=ok.length?ok[ok.length-1]:lim;}
+        if(!opt.fit&&end-y>pageH){const lim=y+pageH;const okb=blk.filter(c=>c<=lim&&c>y+pageH*.25);const ok=cand.filter(c=>c<=lim&&c>y+pageH*.25);end=okb.length?okb[okb.length-1]:ok.length?ok[ok.length-1]:lim;}
         const sl=document.createElement('canvas');sl.width=cv.width;sl.height=end-y;const g=sl.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,sl.width,sl.height);g.drawImage(cv,0,y,cv.width,end-y,0,0,cv.width,end-y);
         if(!first)doc.addPage([W,H],W>H?'landscape':'portrait');first=false;pageNo++;$('pdfBusyMsg').textContent='page '+pageNo;
         let w=W-2*M,h=(end-y)/PX,f=1;if(opt.fit&&h>H-2*M){f=(H-2*M)/h;w*=f;h*=f;}
@@ -862,11 +868,15 @@ async function buildSheet(){
   const totalFt=JOB.reels.reduce((a,r)=>a+reelRuns(r).reduce((q,w)=>q+w.length,0),0);
   const totalCuts=JOB.reels.reduce((a,r)=>a+reelRuns(r).length,0);
   const S=buildSteps();
+  for(const r of JOB.reels)await mintLabel(r);
+  const nTags=S.reduce((a,s)=>a+s.cuts.length,0);
   let html=`<div class="pg" style="display:block"><div class="micro">Warehouse build sheet · ${esc(JOB.name)} · job ${esc(JOB.number)} · ${esc(JOB.customer)} · needed ${esc(JOB.dateNeeded)}</div><h2>Build order, every reel in sequence<i>.</i></h2>
-    <div class="kv"><span>Reels</span><b>${JOB.reels.length}</b><span>Steps</span><b>${S.length}</b><span>Cuts</span><b>${totalCuts}</b><span>Footage</span><b>${totalFt.toLocaleString()} ft</b><span>Rule</span><b>Work the steps top to bottom. A step is one cut across the whole reel: wind it on every listed space, put a pulling head on the outer end, lay paper over it, then the next step. Cut 1 is against the drum; the last cut is on the outside and is Pull 1. Tag every cut with its pull number and where it goes.</b></div>
+    <div class="kv"><span>Reels</span><b>${JOB.reels.length}</b><span>Steps</span><b>${S.length}</b><span>Cuts</span><b>${totalCuts}</b><span>Footage</span><b>${totalFt.toLocaleString()} ft</b><span>Rule</span><b>Work the steps top to bottom. A step is one cut across the whole reel: wind it on every listed space, put a pulling head and head tag on each outer end, shrink wrap it, put the layer label on the wrap, then the next step. Cut 1 is against the drum; the last cut is on the outside and is Pull 1. Tag every cut with its pull number and where it goes.</b></div>
+    <div class="prn"><div><span>Reel labels · 4 x 6</span><b>${JOB.reels.length}</b><i>Honeywell PD45 · one per reel, on the flange · Reel labels PDF</i></div><div><span>Layer labels · 4 x 2</span><b>${S.length}</b><i>PD45 or Zebra ZQ630 · one per step, on the shrink wrap · Layer labels PDF</i></div><div><span>Head tags · 2 x 0.75</span><b>${nTags}</b><i>Zebra ZD421 · one per pulling head · Head tags PDF</i></div></div>
+    <div class="micro" style="margin-bottom:6px">Print all three before winding. Labels come out in step order; keep them in the stack.</div>
     <table class="seq"><tr><th>Step</th><th>Reel</th><th>Cut · pull</th><th>Wind on</th><th>Tag · goes to</th><th>Footage</th><th>Done</th></tr>
     ${S.map(s=>`<tr><td><span class="stepn">${s.n}</span></td><td><b>Reel ${s.ri+1}</b> · #${esc(s.r.reel)}${s.r.feeder?'<br>feeder '+esc(s.r.feeder):''}</td><td><b>Cut ${s.k+1}</b>${s.plain?' · plain reel':' of '+s.of+' · Pull '+s.pull}${s.k===0&&!s.plain?'<br><span style="color:#514c45">against the drum</span>':s.k===s.of-1&&!s.plain?'<br><span style="color:#514c45">outside, pulled first</span>':''}</td><td>${s.cuts.map(c=>`<span class="sw" style="background:${COLORS[c.run.par?c.run.par[0]:c.run.color]}"></span>${s.r.asset==='mroll'?'':'S'+(c.space+1)+' '}${cutSummary(c)} ${esc(c.run.mat||'')} · ${c.run.length.toLocaleString()} ft${c.run.head?' · head '+c.run.headLen+' in':''}`).join('<br>')}</td><td>${esc(s.dest)}</td><td>${s.ft.toLocaleString()} ft</td><td style="width:.3in;border:1px solid #000"></td></tr>`).join('')}</table></div><div style="break-after:page;page-break-after:always"></div>`;
-  for(let ri=0;ri<JOB.reels.length;ri++){const r=JOB.reels[ri];cur=ri;const qrb=await reelQR(r);const img=snap(r,[.55,1.18,r.asset==='aframe'?5.6:5.0]);
+  for(let ri=0;ri<JOB.reels.length;ri++){const r=JOB.reels[ri];cur=ri;const rq=qrFlat(r.label,700);rq.ec='M';const qrb=`<div>${scaled(labelHTML(r,ri,rq),4,6,.36)}<div class="cap" style="font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:#514c45;margin-top:3px">Reel label · 4 x 6 · PD45 · on the flange</div></div>`;const img=snap(r,[.55,1.18,r.asset==='aframe'?5.6:5.0]);
     const n=stackCount(r); let rows='';
     for(let kk=0;kk<n;kk++){const st0=S.find(x=>x.ri===ri&&x.k===kk);if(!st0)continue;
       rows+=`<tr class="cuthead"><td colspan="8">STEP ${st0.n} &nbsp;·&nbsp; CUT ${kk+1}${st0.plain?' · PLAIN REEL':' OF '+n+' · <span class="p">PULL '+st0.pull+'</span>'}${st0.dest?' &nbsp;·&nbsp; '+esc(st0.dest.toUpperCase()):''}</td></tr>`;
@@ -881,6 +891,7 @@ async function buildSheet(){
       return `<div class="stepblk"><div class="wh">${sectionSVG(r,{compact:true,upto:kk})}</div><div>
         <div class="cuthd"><span class="stepn">${st0.n}</span> CUT ${kk+1}${st0.plain?' · PLAIN REEL':' OF '+n+' · <span class="p">PULL '+st0.pull+'</span>'}${st0.dest?' &nbsp;·&nbsp; '+esc(st0.dest.toUpperCase()):''}${kk>0?' <span style="font-weight:400;opacity:.8">· winds on top of cut '+kk+'</span>':''}</div>
         <table><tr><th>Where</th><th>Color</th><th>Wire</th><th>Length</th><th>Head</th><th>Tag · goes to</th><th>Done</th></tr>${rws}</table>
+        <div class="steplbl"><div>${scaled(layerLabelHTML(st0),4,2,.6)}<div class="cap">Layer label ${st0.n} · 4 x 2 · PD45 / ZQ630 · on the wrap</div></div><div><div class="tags">${st0.cuts.map(c=>scaled(headTagHTML(st0,c),2,.75,.6)).join('')}</div><div class="cap">Head tags · 2 x 0.75 · ZD421 · one per head</div></div></div>
         <div class="micro" style="margin-top:4px">${kk<n-1?'Pulling heads on the outer ends, head tags on, shrink wrap over cut '+(kk+1)+' on every space, layer label '+st0.n+' on the wrap, then step '+(st0.n+1)+'.':'Pulling heads on the outer ends, head tags on, shrink wrap, layer label '+st0.n+' on the wrap. Last cut on this reel: mark it '+esc(r.reel)+(r.feeder?' · feeder '+esc(r.feeder):'')+'.'}</div></div></div>`;}).join('');
     html+=`<div class="pg" style="display:block"><div class="whhead${qrb?' hasqr':''}"><div><div class="micro">${esc(JOB.name)} · job ${esc(JOB.number)} · reel ${ri+1} of ${JOB.reels.length}${mine.length?' · steps '+mine[0].n+(mine.length>1?' to '+mine[mine.length-1].n:''):''}</div><h2>Reel ${ri+1} · #${esc(r.reel)}<i>.</i></h2>
       <div class="kv"><span>Asset</span><b>${r.asset==='mroll'?'REEL MATE, paralleled':r.asset==='aframe'?'A-frame, 5 compartment':'M REEL, 5 space'}</b><span>Feeder</span><b>${esc(r.feeder)}</b><span>Area</span><b>${esc(r.area)}</b><span>Voltage</span><b>${esc(r.voltage)}</b><span>On reel</span><b>${reelRuns(r).reduce((q,w)=>q+w.length,0).toLocaleString()} ft · ${n} cut${n>1?'s stacked':''}</b>${r.uid?`<span>UID</span><b>${esc(r.uid)}</b>`:''}${r.instructions?`<span>Note</span><b>${esc(r.instructions)}</b>`:''}</div></div>${qrb}<img src="${img}"></div>
@@ -1019,18 +1030,23 @@ function labelHTML(r,i,qr){const runs=reelRuns(r);const stacked=stackCount(r)>1;
   return `<div class="lbl"><div class="lh"><div><div class="lmicro">${esc(JOB.name)}${JOB.number?' · job '+esc(JOB.number):''}${JOB.customer?' · '+esc(JOB.customer):''}</div><div class="lreel">${esc(r.reel||'?')}<i>.</i></div><div class="lmeta">${r.feeder?'Feeder '+esc(r.feeder):''}${r.area?' · '+esc(r.area):''}${r.voltage?' · '+esc(r.voltage):''}</div></div><div class="lasset">${r.asset==='mroll'?'REEL MATE':r.asset==='aframe'?'A-FRAME':'M REEL'}<br><span>${runs.reduce((a,b)=>a+b.length,0).toLocaleString()} ft${stacked?' · '+stackCount(r)+' pulls':''}</span></div></div>
     <img class="lqr" src="${qr.img}"><div class="luid">${esc(r.uid)}<span>${r.labelSig&&r.labelSig!=='-'?'signed':'unsigned'} · ${qr.n} modules · ec ${qr.ec}</span></div>
     <table class="lcuts">${rows}</table><div class="lfoot"><span>Scan to open this reel</span><span>WIRESTACK</span></div></div>`;}
+function miniSection(r,k,w=130,h=34){const sp=r.asset==='mroll'?[r.spaces.find(x=>x.length)||[]]:r.spaces;const n=sp.length,g=4,cw=(w-g*(n+1))/n;let o=`<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="${h-3}" width="${w}" height="3" fill="#000"/>`;
+  sp.forEach((st,i)=>{const x=g+i*(cw+g);o+=`<rect x="${x}" y="1" width="${cw}" height="${h-4}" fill="none" stroke="#000" stroke-width=".8"/>`;if(!st.length)return;const tot=st.reduce((a,c)=>a+c.length,0)||1;let y=h-3;
+    st.forEach((c,j)=>{const hh=Math.max(3,(h-8)*c.length/tot);y-=hh;o+=`<rect x="${x+1.5}" y="${y}" width="${cw-3}" height="${hh-.6}" fill="${j===k?'#000':'#fff'}" stroke="#000" stroke-width=".8"/>`;});});
+  return o+'</svg>';}
 function layerLabelHTML(s){const r=s.r,url=r.label+'/c'+s.k,q=qrFlat(url,400);const m=s.of;
   const next=s.k>0?buildSteps().find(x=>x.ri===s.ri&&x.k===s.k-1):null;
-  const dst=s.dest||('Pull '+s.pull),fs=dst.length>26?15:dst.length>18?19:dst.length>13?23:26;
-  const wires=s.cuts.map(c=>`<span>${r.asset==='mroll'?'':'S'+(c.space+1)+' '}${esc(c.run.par?c.run.par.map(cap).join('/'):cap(c.run.color))} ${esc(c.run.size)} ${esc(c.run.mat||'')} · ${c.run.length.toLocaleString()} ft</span>`).join('');
-  return `<div class="ll"><div class="llbody"><div class="lmicro">${esc(JOB.name)}${JOB.number?' · order '+esc(JOB.number):''}${JOB.customer?' · '+esc(JOB.customer):''}</div>
-    <div class="lldest" style="font-size:${fs}px">${esc(dst)}<i>.</i></div>
-    <div class="llpull"><b>PULL ${s.pull} OF ${m}</b> · reel ${esc(r.reel)}${r.feeder?' · feeder '+esc(r.feeder):''}${r.area?' · '+esc(r.area):''}</div>
-    <div class="llwires">${wires}</div>
-    <div class="llfoot">${next?`Under this wrap: pull ${next.pull} · ${esc(next.dest||'')} · ${next.ft.toLocaleString()} ft`:'Last pull on this reel · drum under this wrap'} · step ${s.n}</div></div>
-    <div class="llqr"><img class="qrnative" src="${q.img}"><span>${esc(r.uid.slice(-8))} · scan</span></div></div>`;}
+  const dst=s.dest||('Pull '+s.pull),fs=dst.length>26?15:dst.length>18?19:dst.length>13?23:27;
+  const rows=s.cuts.map(c=>`<tr><td>${r.asset==='mroll'?'Reel':'S'+(c.space+1)}</td><td>${esc(c.run.par?c.run.par.map(cap).join('/'):cap(c.run.color))}</td><td>${esc(c.run.size)} ${esc(c.run.mat||'')}</td><td>${c.run.length.toLocaleString()} ft</td></tr>`).join('');
+  return `<div class="ll"><div class="llband"><b>PULL ${s.pull} <i>OF ${m}</i></b><span>REEL ${esc(r.reel)}${r.feeder?' · FEEDER '+esc(r.feeder):''}</span></div>
+    <div class="llbody"><div class="lmicro">${esc(JOB.name)}${JOB.number?' · order '+esc(JOB.number):''}${JOB.customer?' · '+esc(JOB.customer):''}</div>
+      <div class="lldest" style="font-size:${fs}px">${esc(dst)}<i>.</i></div>
+      <table class="llt">${rows}</table>
+      <div class="llfoot"><span>${next?`Under this wrap · pull ${next.pull}${next.dest?' · '+esc(next.dest):''} · ${next.ft.toLocaleString()} ft`:'Last pull · drum under this wrap'}</span><span>WIRESTACK · ${s.n}</span></div></div>
+    <div class="llqr"><img class="qrnative" src="${q.img}">${miniSection(r,s.k,124,30)}</div></div>`;}
 function headTagHTML(s,c){const r=s.r,url=UID.base+'#u/'+r.uid+'/c'+s.k+'s'+c.space,q=qrFlat(url,300);
-  return `<div class="ht"><img class="qrnative" src="${q.img}"><div><b>PULL ${s.pull}</b> of ${s.of} · ${r.asset==='mroll'?'reel':'S'+(c.space+1)} ${esc(cap(c.run.par?c.run.par[0]:c.run.color))} ${esc(c.run.size)}<br>${c.run.length.toLocaleString()} ft · reel ${esc(r.reel)}<br><span>${esc((s.dest||'').toUpperCase())}</span></div></div>`;}
+  return `<div class="ht"><img class="qrnative" src="${q.img}"><div class="htb"><div class="htband"><b>PULL ${s.pull}</b> of ${s.of} · ${r.asset==='mroll'?'REEL':'S'+(c.space+1)}</div><div class="htw">${esc(cap(c.run.par?c.run.par.map(cap).join('/'):c.run.color))} ${esc(c.run.size)} ${esc(c.run.mat||'')} · ${c.run.length.toLocaleString()} ft</div><div class="htd">${esc((s.dest||'').toUpperCase())}</div><div class="htr">reel ${esc(r.reel)}${r.feeder?' · fdr '+esc(r.feeder):''}</div></div></div>`;}
+function scaled(html,w,h,f){return `<div class="lblwrap" style="width:${w*f}in;height:${h*f}in"><div style="width:${w}in;height:${h}in;transform:scale(${f})">${html}</div></div>`;}
 async function makeLayerLabels(kind){const keep=cur,keepSel=sel;sel=null;
   for(let i=0;i<JOB.reels.length;i++){cur=i;await mintLabel(JOB.reels[i]);}
   cur=keep;buildReel(JOB.reels[cur]);sel=keepSel;renderLines();
@@ -1041,7 +1057,7 @@ async function makeLayerLabels(kind){const keep=cur,keepSel=sel;sel=null;
     await makePDF(html,pdfName('head-tags-2x075'),{w:2,h:.75,m:0,unit:'.ht',fit:true,css:'#pdfStage .ht{width:2in;height:.75in}'});}}
 $('layerBtn').onclick=()=>makeLayerLabels('layer');$('headBtn').onclick=()=>makeLayerLabels('head');
 async function makeLabels(){const out=$('labels');out.innerHTML='<div class="status">Minting …</div>';const keep=cur,keepSel=sel;sel=null;let html='';
-  for(let i=0;i<JOB.reels.length;i++){cur=i;const r=JOB.reels[i];await mintLabel(r);const qr=qr3d(r,r.label);html+=labelHTML(r,i,qr);}
+  for(let i=0;i<JOB.reels.length;i++){cur=i;const r=JOB.reels[i];await mintLabel(r);const qr=qrFlat(r.label,700);qr.ec='M';html+=labelHTML(r,i,qr);}
   cur=keep;buildReel(JOB.reels[cur]);sel=keepSel;out.innerHTML=html;$('printLbl').disabled=false;renderLines();
   $('lblStatus').textContent=`${JOB.reels.length} label${JOB.reels.length>1?'s':''} minted${UID.mint?', signed':', unsigned (no mint server set)'} · ${$('lblSize').value.replace('x',' x ')} in · each QR opens its reel in the browser, no server needed.`;}
 async function printLabels(){if(!$('labels').querySelector('.lbl'))return;const sz=$('lblSize').value.split('x');
